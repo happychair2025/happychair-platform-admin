@@ -27,14 +27,17 @@ import { useEffect, useMemo, useState } from 'react'
 import type { AdminSession } from '../../App'
 import AgentsPage from '../../admin/agents/AgentsPage'
 import AuditLogsPage from '../../admin/audit/AuditLogsPage'
+import BillingPage from '../../admin/billing/BillingPage'
 import ClientsPage from '../../admin/clients/ClientsPage'
 import ExecutiveDashboard from '../../admin/dashboard/ExecutiveDashboard'
 import FeatureFlagsPage from '../../admin/feature-flags/FeatureFlagsPage'
+import ClientHealthPage from '../../admin/health/ClientHealthPage'
 import SystemHealthPage from '../../admin/health/SystemHealthPage'
 import ImpersonationPage, { type ActiveImpersonationSession } from '../../admin/impersonation/ImpersonationPage'
 import ModulesPage from '../../admin/modules/ModulesPage'
 import PlaceholderPage from '../../admin/placeholder/PlaceholderPage'
 import RegistrationsPage from '../../admin/registrations/RegistrationsPage'
+import ReportsPage from '../../admin/reports/ReportsPage'
 import RevenuePage from '../../admin/revenue/RevenuePage'
 import AdminSettingsPage from '../../admin/settings/AdminSettingsPage'
 import SupportCenterPage from '../../admin/support/SupportCenterPage'
@@ -208,12 +211,18 @@ export default function AppShell({ session, onLogout }: AppShellProps) {
         return <ModulesPage session={session} />
       case 'usage':
         return <UsageAnalyticsPage />
+      case 'health':
+        return <ClientHealthPage session={session} />
       case 'system-health':
         return <SystemHealthPage />
       case 'audit':
         return <AuditLogsPage />
       case 'agents':
         return <AgentsPage session={session} />
+      case 'reports':
+        return <ReportsPage session={session} />
+      case 'billing':
+        return <BillingPage session={session} />
       case 'feature-flags':
         return <FeatureFlagsPage session={session} />
       case 'settings':
