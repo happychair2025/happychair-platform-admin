@@ -1,0 +1,142 @@
+import type { SupportIssue } from '../mock-data/mockPlatform'
+
+export type RunbookCategory = 'Client Configuration' | 'Data / Queue Repair' | 'Universal Code Issue'
+export type RunbookScope = 'Single Venue' | 'Client / Property' | 'Module-Wide' | 'All Tenants'
+export type RunbookConfidence = 'High' | 'Medium' | 'Needs Engineering'
+
+export interface SupportRunbook {
+  id: string
+  title: string
+  category: RunbookCategory
+  scope: RunbookScope
+  confidence: RunbookConfidence
+  matchesIssueTypes: SupportIssue['issueType'][]
+  supportCanApply: boolean
+  serverSideRequired: boolean
+  diagnosisSignals: string[]
+  safeActions: string[]
+  blockedActions: string[]
+  engineeringPath: string
+  auditActionKey: string
+  owner: 'Support' | 'Engineering' | 'Client Success' | 'Finance'
+}
+
+export const supportRunbooks: SupportRunbook[] = [
+  {
+    id: 'runbook-module-configuration',
+    title: 'Repair Module Configuration',
+    category: 'Client Configuration',
+    scope: 'Client / Property',
+    confidence: 'High',
+    matchesIssueTypes: ['Module Configuration'],
+    supportCanApply: true,
+    serverSideRequired: true,
+    diagnosisSignals: ['Module enabled but routing incomplete', 'Dependency missing', 'Low usage after activation'],
+    safeActions: ['Validate module dependencies', 'Repair staff alert routing', 'Re-run module setup checklist'],
+    blockedActions: ['Change plan or billing', 'Enable paid modules silently', 'Rewrite customer permissions'],
+    engineeringPath: 'Escalate only if dependency validation fails across multiple clients.',
+    auditActionKey: 'runbook.module_configuration.safe_fix.mock',
+    owner: 'Support',
+  },
+  {
+    id: 'runbook-notification-delivery',
+    title: 'Recover Notification Delivery',
+    category: 'Data / Queue Repair',
+    scope: 'Single Venue',
+    confidence: 'High',
+    matchesIssueTypes: ['Notification Delivery', 'Device Offline'],
+    supportCanApply: true,
+    serverSideRequired: true,
+    diagnosisSignals: ['Delayed staff alert delivery', 'Device presence warning', 'Offline tablet session'],
+    safeActions: ['Re-run notification health check', 'Send test notification', 'Reset device presence session'],
+    blockedActions: ['Disable notifications globally', 'Bypass staff routing rules', 'Change app code from support console'],
+    engineeringPath: 'Escalate if delivery delays appear across multiple venues or environments.',
+    auditActionKey: 'runbook.notification_delivery.safe_fix.mock',
+    owner: 'Support',
+  },
+  {
+    id: 'runbook-qr-session',
+    title: 'Repair QR / Session Path',
+    category: 'Data / Queue Repair',
+    scope: 'Single Venue',
+    confidence: 'Medium',
+    matchesIssueTypes: ['QR Scan Failure'],
+    supportCanApply: true,
+    serverSideRequired: true,
+    diagnosisSignals: ['QR scan failures', 'Session start errors', 'Venue code mismatch'],
+    safeActions: ['Validate QR mapping', 'Refresh session token', 'Replay failed session start event'],
+    blockedActions: ['Regenerate all venue QR codes without approval', 'Delete guest session history', 'Weaken venue scoping'],
+    engineeringPath: 'Escalate if QR failures reproduce on clean mappings or multiple tenants.',
+    auditActionKey: 'runbook.qr_session.safe_fix.mock',
+    owner: 'Support',
+  },
+  {
+    id: 'runbook-stalled-queue',
+    title: 'Clear Stalled Service Queue',
+    category: 'Data / Queue Repair',
+    scope: 'Single Venue',
+    confidence: 'Medium',
+    matchesIssueTypes: ['Stalled Queue', 'High Escalations'],
+    supportCanApply: true,
+    serverSideRequired: true,
+    diagnosisSignals: ['Queue age above threshold', 'High escalation count', 'Request state mismatch'],
+    safeActions: ['Replay stalled request event', 'Recalculate queue state', 'Create manager review note'],
+    blockedActions: ['Delete service requests', 'Silently mark guest requests complete', 'Change escalation thresholds globally'],
+    engineeringPath: 'Escalate if queue stalls are caused by shared API errors or deployment regressions.',
+    auditActionKey: 'runbook.stalled_queue.safe_fix.mock',
+    owner: 'Support',
+  },
+  {
+    id: 'runbook-inactive-venue',
+    title: 'Reactivate Quiet Venue',
+    category: 'Client Configuration',
+    scope: 'Client / Property',
+    confidence: 'Medium',
+    matchesIssueTypes: ['Inactive Venue'],
+    supportCanApply: true,
+    serverSideRequired: false,
+    diagnosisSignals: ['No activity in 7+ days', 'Low staff adoption', 'QR placement changed'],
+    safeActions: ['Assign success owner', 'Verify QR placement', 'Schedule staff enablement follow-up'],
+    blockedActions: ['Change customer settings without confirmation', 'Send customer outreach silently', 'Assume churn without success review'],
+    engineeringPath: 'Escalate only if inactivity is tied to login, QR, or request creation failures.',
+    auditActionKey: 'runbook.inactive_venue.safe_fix.mock',
+    owner: 'Client Success',
+  },
+  {
+    id: 'runbook-billing-access',
+    title: 'Resolve Billing / Access Issue',
+    category: 'Client Configuration',
+    scope: 'Client / Property',
+    confidence: 'Medium',
+    matchesIssueTypes: ['Module Configuration', 'Inactive Venue'],
+    supportCanApply: false,
+    serverSideRequired: true,
+    diagnosisSignals: ['Plan mismatch', 'Past-due account', 'Module unavailable despite expected access'],
+    safeActions: ['Create finance review packet', 'Confirm entitlement source', 'Hold module mutation until billing review'],
+    blockedActions: ['Override billing state', 'Grant paid module access without approval', 'Issue refunds'],
+    engineeringPath: 'Finance owns billing state. Engineering only investigates entitlement sync defects.',
+    auditActionKey: 'runbook.billing_access.review_packet.mock',
+    owner: 'Finance',
+  },
+  {
+    id: 'runbook-universal-code',
+    title: 'Universal Code Regression',
+    category: 'Universal Code Issue',
+    scope: 'All Tenants',
+    confidence: 'Needs Engineering',
+    matchesIssueTypes: ['Notification Delivery', 'QR Scan Failure', 'Stalled Queue', 'High Escalations', 'Module Configuration'],
+    supportCanApply: false,
+    serverSideRequired: true,
+    diagnosisSignals: ['Same failure across multiple tenants', 'Started after deploy', 'Shared API or module behavior failing'],
+    safeActions: ['Create engineering incident packet', 'Attach logs and impacted clients', 'Recommend feature flag mitigation'],
+    blockedActions: ['Edit universal code from support console', 'Patch customer data to hide shared bug', 'Disable platform-wide behavior without owner review'],
+    engineeringPath: 'Engineering fixes shared code. Support gathers scope, logs, mitigation options, and client communication context.',
+    auditActionKey: 'runbook.universal_code.incident_packet.mock',
+    owner: 'Engineering',
+  },
+]
+
+export function getRunbooksForIssue(issueType?: SupportIssue['issueType']) {
+  if (!issueType) return supportRunbooks
+  return supportRunbooks.filter(runbook => runbook.matchesIssueTypes.includes(issueType))
+}

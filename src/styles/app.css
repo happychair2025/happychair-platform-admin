@@ -1611,6 +1611,105 @@ td {
   font-size: 13px;
 }
 
+.runbook-panel {
+  display: grid;
+  gap: 12px;
+  margin-top: 6px;
+  padding-top: 14px;
+  border-top: 1px solid var(--b);
+}
+
+.runbook-card-list {
+  display: grid;
+  gap: 10px;
+}
+
+.runbook-card {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 36px minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: start;
+  padding: 12px;
+  border: 1px solid var(--b);
+  border-radius: 8px;
+  background: var(--s2);
+  color: var(--t1);
+  text-align: left;
+}
+
+.runbook-card.selected {
+  border-color: rgba(34, 211, 238, 0.55);
+  background: rgba(34, 211, 238, 0.08);
+}
+
+.runbook-card strong,
+.runbook-meta-grid strong,
+.runbook-columns h3 {
+  display: block;
+  font-size: 13px;
+}
+
+.runbook-card small,
+.runbook-meta-grid span {
+  display: block;
+  margin-top: 4px;
+  color: var(--t2);
+  font-size: 12px;
+}
+
+.runbook-meta-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.runbook-meta-grid > div {
+  padding: 12px;
+  background: var(--s2);
+  border: 1px solid var(--b);
+  border-radius: 8px;
+}
+
+.runbook-columns {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.runbook-columns > div {
+  display: grid;
+  align-content: start;
+  gap: 8px;
+  padding: 12px;
+  background: var(--s2);
+  border: 1px solid var(--b);
+  border-radius: 8px;
+}
+
+.runbook-columns h3,
+.runbook-columns p {
+  margin: 0;
+}
+
+.runbook-columns p {
+  display: grid;
+  grid-template-columns: 18px minmax(0, 1fr);
+  gap: 7px;
+  align-items: start;
+  color: var(--t2);
+  font-size: 12px;
+}
+
+.runbook-columns svg {
+  margin-top: 1px;
+  color: var(--cyan);
+}
+
+.universal-boundary {
+  border-color: rgba(245, 158, 11, 0.34);
+}
+
 .health-signal-grid {
   grid-template-columns: repeat(4, minmax(0, 1fr));
 }
@@ -1862,7 +1961,9 @@ td {
   .agent-rule-columns,
   .permission-matrix,
   .session-control-grid,
-  .health-signal-grid {
+  .health-signal-grid,
+  .runbook-columns,
+  .runbook-meta-grid {
     grid-template-columns: 1fr;
   }
 
@@ -1927,6 +2028,8 @@ td {
   .hierarchy-grid,
   .finance-summary-grid,
   .issue-summary-grid,
+  .runbook-meta-grid,
+  .runbook-columns,
   .mini-metrics {
     grid-template-columns: 1fr;
   }

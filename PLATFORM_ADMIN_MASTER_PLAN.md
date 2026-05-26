@@ -666,8 +666,17 @@ Support should see:
 - Affected client/venue
 - Probable cause
 - Recommended action
+- Matching support runbook
+- Safe support actions
+- Blocked actions
 - Related logs/events
 - Escalation option
+
+Support runbook categories:
+
+- Client/config issue: support can apply permissioned configuration repairs when safe.
+- Data/queue issue: support can trigger server-side replay, reset, validation, or repair actions when allowlisted.
+- Universal code issue: support cannot change shared code; Platform Admin should gather scope, logs, impacted clients, mitigation options, and create an engineering incident packet.
 
 Health check model:
 
@@ -1239,6 +1248,7 @@ Build:
 
 - Health checks
 - Troubleshooting panel
+- Diagnose and remediate runbooks
 - System status view
 - Support action logging
 - Issue severity states
@@ -1248,7 +1258,9 @@ Build:
 Exit criteria:
 
 - Support can identify problems quickly.
+- Support can distinguish client configuration, data/queue repair, and universal code issues.
 - Troubleshooting actions are audit-logged.
+- Universal code issues route to engineering incident packets instead of support-side mutation.
 - System health can be shown by client and venue.
 
 ### Phase 6: Secure Impersonation
