@@ -247,12 +247,21 @@ export interface ImpersonationSessionRecord {
   destructiveActionsBlocked: number
 }
 
-export type AgentKey = 'marketing' | 'email' | 'support' | 'finance' | 'client_success'
+export type AgentKey =
+  | 'marketing'
+  | 'social_media'
+  | 'seo_geo'
+  | 'sem'
+  | 'sales_sdr'
+  | 'email'
+  | 'support'
+  | 'finance'
+  | 'client_success'
 
 export interface AgentDefinition {
   key: AgentKey
   name: string
-  owner: 'Marketing' | 'Client Success' | 'Support' | 'Finance' | 'Owner'
+  owner: 'Marketing' | 'Sales' | 'Client Success' | 'Support' | 'Finance' | 'Owner'
   status: 'Monitoring Ready' | 'Draft Only' | 'Planned'
   purpose: string
   monitors: string[]
@@ -1339,10 +1348,50 @@ export const agentDefinitions: AgentDefinition[] = [
     name: 'Marketing Agent',
     owner: 'Marketing',
     status: 'Monitoring Ready',
-    purpose: 'Monitors signup sources, conversion trends, channel performance, and campaign opportunities.',
-    monitors: ['Signup source', 'Campaign conversion', 'Demo requests', 'Abandoned signups'],
-    allowedActions: ['Recommend campaign ideas', 'Draft lifecycle copy', 'Flag high-performing channels'],
-    blockedActions: ['Send campaigns', 'Change pricing', 'Mutate signup records'],
+    purpose: 'Monitors signup sources, conversion trends, channel performance, message fit, and campaign opportunities.',
+    monitors: ['Signup source', 'Campaign conversion', 'Demo requests', 'Abandoned signups', 'Market segment demand'],
+    allowedActions: ['Recommend campaign ideas', 'Draft lifecycle copy', 'Flag high-performing channels', 'Summarize channel quality'],
+    blockedActions: ['Send campaigns', 'Change pricing', 'Mutate signup records', 'Change attribution source'],
+  },
+  {
+    key: 'social_media',
+    name: 'Social Media Agent',
+    owner: 'Marketing',
+    status: 'Draft Only',
+    purpose: 'Monitors social content opportunities, testimonials, launch moments, customer proof, and audience engagement signals.',
+    monitors: ['Testimonial candidates', 'Pilot milestones', 'Product launch moments', 'Content calendar gaps', 'Engagement signals'],
+    allowedActions: ['Draft social posts', 'Recommend content angles', 'Flag testimonial candidates', 'Summarize weekly social opportunities'],
+    blockedActions: ['Publish posts', 'Reply publicly', 'Change brand accounts', 'Use customer names without approval'],
+  },
+  {
+    key: 'seo_geo',
+    name: 'SEO / GEO Agent',
+    owner: 'Marketing',
+    status: 'Monitoring Ready',
+    purpose: 'Monitors organic search, answer-engine visibility, keyword themes, content gaps, and property-type demand.',
+    monitors: ['Organic keyword themes', 'Search intent', 'Answer-engine visibility', 'Venue category pages', 'Content gaps'],
+    allowedActions: ['Draft content briefs', 'Recommend page topics', 'Flag ranking opportunities', 'Summarize answer-engine gaps'],
+    blockedActions: ['Publish pages', 'Change canonical metadata', 'Submit index changes', 'Rewrite public positioning silently'],
+  },
+  {
+    key: 'sem',
+    name: 'SEM Agent',
+    owner: 'Marketing',
+    status: 'Draft Only',
+    purpose: 'Monitors paid search opportunities, demo-intent keywords, acquisition cost signals, and campaign readiness.',
+    monitors: ['Demo-intent keywords', 'Paid search terms', 'Conversion cost', 'Market-type demand', 'Negative keyword candidates'],
+    allowedActions: ['Draft ad groups', 'Suggest negative keywords', 'Flag budget opportunities', 'Prepare campaign review notes'],
+    blockedActions: ['Change ad spend', 'Launch campaigns', 'Edit billing settings', 'Alter conversion tracking'],
+  },
+  {
+    key: 'sales_sdr',
+    name: 'Sales SDR Agent',
+    owner: 'Sales',
+    status: 'Draft Only',
+    purpose: 'Monitors qualified signups, demo requests, trial readiness, expansion signals, and outreach timing.',
+    monitors: ['Demo requests', 'Qualified signups', 'Trial setup progress', 'Expansion signals', 'Inactive buying intent'],
+    allowedActions: ['Score leads', 'Draft outreach sequences', 'Recommend next step', 'Prepare call context'],
+    blockedActions: ['Send outreach silently', 'Book meetings', 'Change pipeline stage', 'Modify account ownership'],
   },
   {
     key: 'email',
@@ -1379,10 +1428,10 @@ export const agentDefinitions: AgentDefinition[] = [
     name: 'Client Success Agent',
     owner: 'Client Success',
     status: 'Monitoring Ready',
-    purpose: 'Finds adoption risks, usage decline, expansion signals, incomplete setup, and testimonial candidates.',
-    monitors: ['Usage decline', 'Expansion score', 'Setup completion', 'Module adoption', 'Health score'],
-    allowedActions: ['Recommend outreach', 'Draft account action', 'Flag expansion candidate'],
-    blockedActions: ['Enable modules', 'Change permissions', 'Send customer messages silently'],
+    purpose: 'Finds onboarding gaps, adoption risks, usage decline, expansion signals, renewal risks, and testimonial candidates.',
+    monitors: ['Usage decline', 'Expansion score', 'Setup completion', 'Module adoption', 'Health score', 'Renewal risk'],
+    allowedActions: ['Recommend outreach', 'Draft account action', 'Flag expansion candidate', 'Prepare QBR notes'],
+    blockedActions: ['Enable modules', 'Change permissions', 'Send customer messages silently', 'Change lifecycle status'],
   },
 ]
 
@@ -1449,6 +1498,53 @@ export const agentEvents: AgentEventRecord[] = [
     outputSummary: 'Founder outreach channel is producing qualified restaurant demand.',
     auditRequired: false,
     createdAt: new Date(Date.now() - 1000 * 60 * 210).toISOString(),
+  },
+  {
+    id: 'agent-event-6',
+    agentKey: 'social_media',
+    agentName: 'Social Media Agent',
+    organizationName: 'Happy Bistro Group',
+    venueName: 'Happy Bistro',
+    eventType: 'Recommendation Created',
+    status: 'Draft Only',
+    inputSummary: 'Strong Friday usage and positive support resolution created a customer-proof moment.',
+    outputSummary: 'Draft a founder-approved post about faster table response time without naming the client publicly yet.',
+    auditRequired: true,
+    createdAt: new Date(Date.now() - 1000 * 60 * 246).toISOString(),
+  },
+  {
+    id: 'agent-event-7',
+    agentKey: 'seo_geo',
+    agentName: 'SEO / GEO Agent',
+    eventType: 'Risk Flagged',
+    status: 'Needs Review',
+    inputSummary: 'High demo interest from resorts, but no dedicated resort operations content exists yet.',
+    outputSummary: 'Create a resort service recovery content brief and answer-engine FAQ outline.',
+    auditRequired: true,
+    createdAt: new Date(Date.now() - 1000 * 60 * 288).toISOString(),
+  },
+  {
+    id: 'agent-event-8',
+    agentKey: 'sem',
+    agentName: 'SEM Agent',
+    eventType: 'Summary Drafted',
+    status: 'Draft Only',
+    inputSummary: 'Paid search terms around restaurant service paging and guest request software show strong demo intent.',
+    outputSummary: 'Prepare SEM test plan with exact-match terms, negative keywords, and owner review before spend changes.',
+    auditRequired: true,
+    createdAt: new Date(Date.now() - 1000 * 60 * 334).toISOString(),
+  },
+  {
+    id: 'agent-event-9',
+    agentKey: 'sales_sdr',
+    agentName: 'Sales SDR Agent',
+    organizationName: 'Marina Table Group',
+    eventType: 'Trigger Detected',
+    status: 'Queued',
+    inputSummary: 'Restaurant demo request, full business email, and premium module interest detected.',
+    outputSummary: 'Score as high-intent lead and draft a same-day outreach sequence for human review.',
+    auditRequired: true,
+    createdAt: new Date(Date.now() - 1000 * 60 * 371).toISOString(),
   },
 ]
 

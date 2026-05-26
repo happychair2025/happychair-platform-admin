@@ -169,6 +169,10 @@ Navigation structure:
 - Audit Logs
 - AI Agents
   - Marketing Agent
+  - Social Media Agent
+  - SEO / GEO Agent
+  - SEM Agent
+  - Sales SDR Agent
   - Email Agent
   - Support Agent
   - Finance Agent
@@ -691,6 +695,10 @@ Build the admin structure and event hooks for future agents.
 Agent sections:
 
 - Marketing Agent
+- Social Media Agent
+- SEO / GEO Agent
+- SEM Agent
+- Sales SDR Agent
 - Email Agent
 - Support Agent
 - Finance Agent
@@ -703,6 +711,38 @@ Marketing Agent future scope:
 - Monitor channel performance
 - Identify campaign opportunities
 - Recommend landing page or lifecycle messaging ideas
+
+Social Media Agent future scope:
+
+- Monitor testimonial candidates
+- Monitor launch moments and product proof
+- Identify content calendar gaps
+- Draft post ideas for human approval
+- Flag customer proof that requires approval before public use
+
+SEO / GEO Agent future scope:
+
+- Monitor organic keyword themes
+- Monitor answer-engine visibility
+- Identify content gaps by market and property type
+- Recommend content briefs and FAQ opportunities
+- Flag pages or topics that need owner review before publishing
+
+SEM Agent future scope:
+
+- Monitor paid search intent
+- Monitor acquisition cost and conversion quality
+- Recommend ad group and negative keyword ideas
+- Prepare spend-change recommendations for human review
+- Never change ad spend or campaign status without explicit approval
+
+Sales SDR Agent future scope:
+
+- Monitor demo requests and qualified signups
+- Score lead readiness
+- Draft outbound sequences and call context
+- Flag expansion or upsell handoff opportunities
+- Never send outreach or change pipeline state without human approval
 
 Email Agent future scope:
 
@@ -1237,6 +1277,10 @@ Build:
 - AI Agents section
 - Agent event model
 - Marketing Agent placeholder
+- Social Media Agent placeholder
+- SEO / GEO Agent placeholder
+- SEM Agent placeholder
+- Sales SDR Agent placeholder
 - Email Agent placeholder
 - Support Agent placeholder
 - Finance Agent placeholder

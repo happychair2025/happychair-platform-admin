@@ -1,4 +1,18 @@
-import { Bot, CheckCircle2, CircleDollarSign, ClipboardCheck, HeartHandshake, LifeBuoy, Mail, Megaphone, ShieldCheck } from 'lucide-react'
+import {
+  Bot,
+  CheckCircle2,
+  CircleDollarSign,
+  ClipboardCheck,
+  HeartHandshake,
+  LifeBuoy,
+  Mail,
+  Megaphone,
+  MousePointerClick,
+  SearchCheck,
+  Share2,
+  ShieldCheck,
+  UserRoundPlus,
+} from 'lucide-react'
 import { useMemo, useState } from 'react'
 import type { AdminSession } from '../../App'
 import DataTable from '../../components/admin/DataTable'
@@ -15,6 +29,10 @@ interface AgentsPageProps {
 
 const agentIcons = {
   marketing: Megaphone,
+  social_media: Share2,
+  seo_geo: SearchCheck,
+  sem: MousePointerClick,
+  sales_sdr: UserRoundPlus,
   email: Mail,
   support: LifeBuoy,
   finance: CircleDollarSign,
@@ -63,7 +81,7 @@ export default function AgentsPage({ session }: AgentsPageProps) {
       {notice && <p className="warning-copy">{notice}</p>}
 
       <div className="metrics-grid compact">
-        <MetricCard label="Agent Workflows" value={String(agentDefinitions.length)} delta="Marketing, email, support, finance, success" tone="neutral" icon={<Bot size={16} />} />
+        <MetricCard label="Agent Workflows" value={String(agentDefinitions.length)} delta="GTM, support, finance, success" tone="neutral" icon={<Bot size={16} />} />
         <MetricCard label="Monitoring Ready" value={String(monitoringReady)} delta="Read-only signal watchers" tone="ok" icon={<ShieldCheck size={16} />} />
         <MetricCard label="Needs Review" value={String(needsReview)} delta="Human approval queue" tone={needsReview ? 'warn' : 'ok'} icon={<ClipboardCheck size={16} />} />
         <MetricCard label="Audit Required" value={String(auditRequired)} delta="Events with future audit hooks" tone="warn" icon={<CheckCircle2 size={16} />} />
