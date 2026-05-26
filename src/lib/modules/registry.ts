@@ -1,0 +1,161 @@
+export type ModuleCategory = 'operations' | 'guest' | 'analytics' | 'enterprise' | 'intelligence'
+export type ModuleStatus = 'active' | 'beta' | 'internal' | 'planned'
+
+export interface PlatformModule {
+  key: string
+  name: string
+  description: string
+  category: ModuleCategory
+  status: ModuleStatus
+  planRequired: 'Starter' | 'Growth' | 'Premium' | 'Enterprise'
+  clientVisible: boolean
+  internalOnly: boolean
+  dependencies: string[]
+}
+
+export const moduleRegistry: PlatformModule[] = [
+  {
+    key: 'service_requests',
+    name: 'Service Requests',
+    description: 'Guest and staff service request capture.',
+    category: 'operations',
+    status: 'active',
+    planRequired: 'Starter',
+    clientVisible: true,
+    internalOnly: false,
+    dependencies: [],
+  },
+  {
+    key: 'service_signal',
+    name: 'Service Signal / Paging',
+    description: 'Real-time attention and paging signals.',
+    category: 'operations',
+    status: 'active',
+    planRequired: 'Growth',
+    clientVisible: true,
+    internalOnly: false,
+    dependencies: ['service_requests'],
+  },
+  {
+    key: 'staff_alerts',
+    name: 'Staff Alerts',
+    description: 'Staff notification routing and alert handling.',
+    category: 'operations',
+    status: 'active',
+    planRequired: 'Growth',
+    clientVisible: true,
+    internalOnly: false,
+    dependencies: ['service_requests'],
+  },
+  {
+    key: 'escalations',
+    name: 'Escalations',
+    description: 'Escalation detection and manager visibility.',
+    category: 'operations',
+    status: 'active',
+    planRequired: 'Growth',
+    clientVisible: true,
+    internalOnly: false,
+    dependencies: ['service_requests', 'staff_alerts'],
+  },
+  {
+    key: 'guest_sentiment',
+    name: 'Guest Sentiment',
+    description: 'Guest feedback capture and service-level trends.',
+    category: 'guest',
+    status: 'active',
+    planRequired: 'Premium',
+    clientVisible: true,
+    internalOnly: false,
+    dependencies: ['service_requests'],
+  },
+  {
+    key: 'allergy_shield',
+    name: 'Allergy Shield',
+    description: 'Allergy workflow tracking and kitchen visibility.',
+    category: 'guest',
+    status: 'active',
+    planRequired: 'Premium',
+    clientVisible: true,
+    internalOnly: false,
+    dependencies: [],
+  },
+  {
+    key: 'vip_recognition',
+    name: 'VIP Recognition',
+    description: 'High-value guest recognition and service prompts.',
+    category: 'guest',
+    status: 'beta',
+    planRequired: 'Premium',
+    clientVisible: true,
+    internalOnly: false,
+    dependencies: ['guest_sentiment'],
+  },
+  {
+    key: 'reputation_firewall',
+    name: 'Reputation Firewall',
+    description: 'Service recovery workflow before public review leakage.',
+    category: 'guest',
+    status: 'planned',
+    planRequired: 'Premium',
+    clientVisible: true,
+    internalOnly: false,
+    dependencies: ['guest_sentiment'],
+  },
+  {
+    key: 'incident_replay',
+    name: 'Incident Replay',
+    description: 'Timeline reconstruction for service incidents.',
+    category: 'analytics',
+    status: 'planned',
+    planRequired: 'Enterprise',
+    clientVisible: false,
+    internalOnly: false,
+    dependencies: ['service_requests', 'escalations'],
+  },
+  {
+    key: 'heatmaps',
+    name: 'Heatmaps',
+    description: 'Operational activity patterns across venues.',
+    category: 'analytics',
+    status: 'planned',
+    planRequired: 'Premium',
+    clientVisible: true,
+    internalOnly: false,
+    dependencies: ['service_requests'],
+  },
+  {
+    key: 'executive_reporting',
+    name: 'Executive Reporting',
+    description: 'Owner-level reporting across properties and venues.',
+    category: 'enterprise',
+    status: 'beta',
+    planRequired: 'Enterprise',
+    clientVisible: true,
+    internalOnly: false,
+    dependencies: ['service_requests'],
+  },
+  {
+    key: 'ai_recommendations',
+    name: 'AI Recommendations',
+    description: 'Future recommendation layer for operational decisions.',
+    category: 'intelligence',
+    status: 'internal',
+    planRequired: 'Enterprise',
+    clientVisible: false,
+    internalOnly: true,
+    dependencies: ['executive_reporting'],
+  },
+  {
+    key: 'multi_property_management',
+    name: 'Multi-Property Management',
+    description: 'Organization-wide management across properties.',
+    category: 'enterprise',
+    status: 'active',
+    planRequired: 'Enterprise',
+    clientVisible: true,
+    internalOnly: false,
+    dependencies: [],
+  },
+]
+
