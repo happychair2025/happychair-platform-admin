@@ -29,12 +29,14 @@ import AgentsPage from '../../admin/agents/AgentsPage'
 import AuditLogsPage from '../../admin/audit/AuditLogsPage'
 import ClientsPage from '../../admin/clients/ClientsPage'
 import ExecutiveDashboard from '../../admin/dashboard/ExecutiveDashboard'
+import FeatureFlagsPage from '../../admin/feature-flags/FeatureFlagsPage'
 import SystemHealthPage from '../../admin/health/SystemHealthPage'
 import ImpersonationPage, { type ActiveImpersonationSession } from '../../admin/impersonation/ImpersonationPage'
 import ModulesPage from '../../admin/modules/ModulesPage'
 import PlaceholderPage from '../../admin/placeholder/PlaceholderPage'
 import RegistrationsPage from '../../admin/registrations/RegistrationsPage'
 import RevenuePage from '../../admin/revenue/RevenuePage'
+import AdminSettingsPage from '../../admin/settings/AdminSettingsPage'
 import SupportCenterPage from '../../admin/support/SupportCenterPage'
 import VenueSupportPage from '../../admin/support/VenueSupportPage'
 import TroubleshootingPage from '../../admin/troubleshooting/TroubleshootingPage'
@@ -212,6 +214,10 @@ export default function AppShell({ session, onLogout }: AppShellProps) {
         return <AuditLogsPage />
       case 'agents':
         return <AgentsPage session={session} />
+      case 'feature-flags':
+        return <FeatureFlagsPage session={session} />
+      case 'settings':
+        return <AdminSettingsPage session={session} />
       default:
         return <PlaceholderPage pageId={activePage} title={navItems.find(item => item.id === activePage)?.label ?? 'Admin View'} />
     }

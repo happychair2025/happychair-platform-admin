@@ -50,6 +50,12 @@ export const mockReadAdapter: ReadOnlySupabaseAdapter = {
   async listAgentEvents() {
     return mockReadModel.agentEvents
   },
+  async listInternalAdminUsers() {
+    return mockReadModel.internalAdminUsers
+  },
+  async listFeatureFlags() {
+    return mockReadModel.featureFlags
+  },
   async listSupportNotes(scope?: { scopeType: SupportNote['scopeType']; scopeId: string }) {
     if (!scope) return mockReadModel.supportNotes
     return mockReadModel.supportNotes.filter(note => note.scopeType === scope.scopeType && note.scopeId === scope.scopeId)

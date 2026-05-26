@@ -41,6 +41,8 @@ The current read layer expects these views:
 - `platform_admin_impersonation_sessions_read`
 - `platform_admin_agent_definitions_read`
 - `platform_admin_agent_events_read`
+- `platform_admin_internal_admin_users_read`
+- `platform_admin_feature_flags_read`
 - `platform_admin_support_notes_read`
 - `platform_admin_activity_events_read`
 - `platform_admin_usage_analytics_read`
@@ -53,6 +55,7 @@ The repo includes draft, additive migrations:
 
 - `supabase/migrations/202605260001_platform_admin_internal_schema.sql`
 - `supabase/migrations/202605260002_platform_admin_read_views.sql`
+- `supabase/migrations/202605260003_platform_admin_settings_views.sql`
 
 Review [Database Change Plan](DATABASE_CHANGE_PLAN.md) before applying either migration to a shared Supabase project.
 

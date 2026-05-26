@@ -3,8 +3,10 @@ import type {
   AgentDefinition,
   AgentEventRecord,
   BillingRiskRecord,
+  FeatureFlagRecord,
   ImpersonationSessionRecord,
   ImpersonationTarget,
+  InternalAdminUser,
   ModuleActivationSnapshot,
   ModuleAdoptionRow,
   ModuleUsageGap,
@@ -35,6 +37,8 @@ export const readOnlyViewNames = {
   impersonationSessions: 'platform_admin_impersonation_sessions_read',
   agentDefinitions: 'platform_admin_agent_definitions_read',
   agentEvents: 'platform_admin_agent_events_read',
+  internalAdminUsers: 'platform_admin_internal_admin_users_read',
+  featureFlags: 'platform_admin_feature_flags_read',
   supportNotes: 'platform_admin_support_notes_read',
   activityEvents: 'platform_admin_activity_events_read',
   usageAnalytics: 'platform_admin_usage_analytics_read',
@@ -56,6 +60,8 @@ export interface PlatformAdminReadModel {
   impersonationSessions: ImpersonationSessionRecord[]
   agentDefinitions: AgentDefinition[]
   agentEvents: AgentEventRecord[]
+  internalAdminUsers: InternalAdminUser[]
+  featureFlags: FeatureFlagRecord[]
   supportNotes: SupportNote[]
   activityEvents: ActivityEvent[]
   usageAnalytics: UsageAnalyticsRow[]
@@ -77,6 +83,8 @@ export interface ReadOnlySupabaseAdapter {
   listImpersonationSessions(): Promise<ImpersonationSessionRecord[]>
   listAgentDefinitions(): Promise<AgentDefinition[]>
   listAgentEvents(): Promise<AgentEventRecord[]>
+  listInternalAdminUsers(): Promise<InternalAdminUser[]>
+  listFeatureFlags(): Promise<FeatureFlagRecord[]>
   listSupportNotes(scope?: { scopeType: SupportNote['scopeType']; scopeId: string }): Promise<SupportNote[]>
   listActivityEvents(scope?: { scopeType: ActivityEvent['scopeType']; scopeId: string }): Promise<ActivityEvent[]>
   listUsageAnalytics(): Promise<UsageAnalyticsRow[]>

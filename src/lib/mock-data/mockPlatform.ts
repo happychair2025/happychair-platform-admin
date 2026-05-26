@@ -275,6 +275,43 @@ export interface AgentEventRecord {
   createdAt: string
 }
 
+export type InternalAdminRole =
+  | 'owner'
+  | 'admin'
+  | 'support_lead'
+  | 'support_agent'
+  | 'client_success'
+  | 'finance'
+  | 'marketing'
+  | 'engineering'
+  | 'read_only'
+
+export interface InternalAdminUser {
+  id: string
+  name: string
+  email: string
+  role: InternalAdminRole
+  status: 'Active' | 'Invited' | 'Disabled'
+  lastLoginAt: string
+  createdAt: string
+}
+
+export interface FeatureFlagRecord {
+  id: string
+  key: string
+  name: string
+  description: string
+  category: 'Admin Shell' | 'Data Layer' | 'Support' | 'Revenue' | 'Agents'
+  enabled: boolean
+  status: 'Active' | 'Paused' | 'Planned'
+  environment: 'Internal' | 'Staging' | 'Production'
+  rollout: number
+  owner: 'Owner' | 'Engineering' | 'Support' | 'Finance' | 'Client Success' | 'Marketing'
+  blastRadius: 'Low' | 'Medium' | 'High'
+  requiresAudit: boolean
+  updatedAt: string
+}
+
 export const executiveMetrics = [
   { label: 'MRR', value: '$42,780', delta: '+8.2%', tone: 'ok' },
   { label: 'ARR', value: '$513,360', delta: '+$39.4k', tone: 'ok' },
@@ -1412,6 +1449,132 @@ export const agentEvents: AgentEventRecord[] = [
     outputSummary: 'Founder outreach channel is producing qualified restaurant demand.',
     auditRequired: false,
     createdAt: new Date(Date.now() - 1000 * 60 * 210).toISOString(),
+  },
+]
+
+export const internalAdminUsers: InternalAdminUser[] = [
+  {
+    id: 'admin-owner',
+    name: 'Team Happy Chair',
+    email: 'owner@happychair.internal',
+    role: 'owner',
+    status: 'Active',
+    lastLoginAt: new Date(Date.now() - 1000 * 60 * 9).toISOString(),
+    createdAt: '2026-05-01T12:00:00.000Z',
+  },
+  {
+    id: 'admin-support-lead',
+    name: 'Support Lead',
+    email: 'support-lead@happychair.internal',
+    role: 'support_lead',
+    status: 'Active',
+    lastLoginAt: new Date(Date.now() - 1000 * 60 * 82).toISOString(),
+    createdAt: '2026-05-06T12:00:00.000Z',
+  },
+  {
+    id: 'admin-finance',
+    name: 'Finance',
+    email: 'finance@happychair.internal',
+    role: 'finance',
+    status: 'Invited',
+    lastLoginAt: 'Pending',
+    createdAt: '2026-05-18T12:00:00.000Z',
+  },
+  {
+    id: 'admin-engineering',
+    name: 'Engineering',
+    email: 'engineering@happychair.internal',
+    role: 'engineering',
+    status: 'Active',
+    lastLoginAt: new Date(Date.now() - 1000 * 60 * 34).toISOString(),
+    createdAt: '2026-05-12T12:00:00.000Z',
+  },
+  {
+    id: 'admin-read-only',
+    name: 'Read Only Reviewer',
+    email: 'readonly@happychair.internal',
+    role: 'read_only',
+    status: 'Disabled',
+    lastLoginAt: new Date(Date.now() - 1000 * 60 * 60 * 92).toISOString(),
+    createdAt: '2026-05-10T12:00:00.000Z',
+  },
+]
+
+export const featureFlags: FeatureFlagRecord[] = [
+  {
+    id: 'flag-read-only-views',
+    key: 'platform_admin.read_only_views',
+    name: 'Read-Only Supabase Views',
+    description: 'Routes Platform Admin screens through reviewed read-only Supabase view contracts.',
+    category: 'Data Layer',
+    enabled: false,
+    status: 'Planned',
+    environment: 'Internal',
+    rollout: 0,
+    owner: 'Engineering',
+    blastRadius: 'Medium',
+    requiresAudit: true,
+    updatedAt: new Date(Date.now() - 1000 * 60 * 44).toISOString(),
+  },
+  {
+    id: 'flag-impersonation-banner',
+    key: 'platform_admin.impersonation_banner',
+    name: 'Global Impersonation Banner',
+    description: 'Shows visible internal banner during view-as sessions.',
+    category: 'Support',
+    enabled: true,
+    status: 'Active',
+    environment: 'Internal',
+    rollout: 100,
+    owner: 'Support',
+    blastRadius: 'Low',
+    requiresAudit: true,
+    updatedAt: new Date(Date.now() - 1000 * 60 * 128).toISOString(),
+  },
+  {
+    id: 'flag-agent-event-hooks',
+    key: 'platform_admin.agent_event_hooks',
+    name: 'Agent Event Hooks',
+    description: 'Enables future agent activity records for recommendations, summaries, drafts, and flags.',
+    category: 'Agents',
+    enabled: true,
+    status: 'Active',
+    environment: 'Internal',
+    rollout: 100,
+    owner: 'Engineering',
+    blastRadius: 'Medium',
+    requiresAudit: true,
+    updatedAt: new Date(Date.now() - 1000 * 60 * 210).toISOString(),
+  },
+  {
+    id: 'flag-finance-provider',
+    key: 'platform_admin.finance_provider_sync',
+    name: 'Finance Provider Sync',
+    description: 'Placeholder for Stripe, QuickBooks, or future billing-provider synchronization.',
+    category: 'Revenue',
+    enabled: false,
+    status: 'Planned',
+    environment: 'Staging',
+    rollout: 0,
+    owner: 'Finance',
+    blastRadius: 'High',
+    requiresAudit: true,
+    updatedAt: new Date(Date.now() - 1000 * 60 * 355).toISOString(),
+  },
+  {
+    id: 'flag-settings-rbac',
+    key: 'platform_admin.settings_rbac',
+    name: 'Admin RBAC Matrix',
+    description: 'Shows role and permission coverage for internal Happy Chair access.',
+    category: 'Admin Shell',
+    enabled: true,
+    status: 'Active',
+    environment: 'Internal',
+    rollout: 100,
+    owner: 'Owner',
+    blastRadius: 'High',
+    requiresAudit: true,
+    updatedAt: new Date(Date.now() - 1000 * 60 * 74).toISOString(),
   },
 ]
 

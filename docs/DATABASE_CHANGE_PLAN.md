@@ -60,6 +60,8 @@ New public read views:
 - `platform_admin_impersonation_sessions_read`
 - `platform_admin_agent_definitions_read`
 - `platform_admin_agent_events_read`
+- `platform_admin_internal_admin_users_read`
+- `platform_admin_feature_flags_read`
 - `platform_admin_support_notes_read`
 - `platform_admin_activity_events_read`
 - `platform_admin_usage_analytics_read`

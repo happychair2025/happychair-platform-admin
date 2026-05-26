@@ -3,8 +3,10 @@ import type {
   AgentDefinition,
   AgentEventRecord,
   BillingRiskRecord,
+  FeatureFlagRecord,
   ImpersonationSessionRecord,
   ImpersonationTarget,
+  InternalAdminUser,
   ModuleActivationSnapshot,
   ModuleAdoptionRow,
   ModuleUsageGap,
@@ -86,6 +88,12 @@ export function createSupabaseReadOnlyAdapter(config: SupabaseReadOnlyConfig): R
     },
     async listAgentEvents() {
       return fetchView<AgentEventRecord>('agentEvents')
+    },
+    async listInternalAdminUsers() {
+      return fetchView<InternalAdminUser>('internalAdminUsers')
+    },
+    async listFeatureFlags() {
+      return fetchView<FeatureFlagRecord>('featureFlags')
     },
     async listSupportNotes(scope?: { scopeType: SupportNote['scopeType']; scopeId: string }) {
       const rows = await fetchView<SupportNote>('supportNotes')
