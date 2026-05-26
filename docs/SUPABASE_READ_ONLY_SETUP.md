@@ -47,6 +47,15 @@ The current read layer expects these views:
 
 Views may expose snake_case columns. The client read adapter converts snake_case keys to camelCase for the UI.
 
+## Draft Migrations
+
+The repo includes draft, additive migrations:
+
+- `supabase/migrations/202605260001_platform_admin_internal_schema.sql`
+- `supabase/migrations/202605260002_platform_admin_read_views.sql`
+
+Review [Database Change Plan](DATABASE_CHANGE_PLAN.md) before applying either migration to a shared Supabase project.
+
 ## Failure Behavior
 
 If a read-only view fails to load, Platform Admin falls back to mock data and shows `Mock fallback` in the top bar. This keeps the UI usable while making connection problems visible.
