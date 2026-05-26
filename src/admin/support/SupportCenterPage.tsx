@@ -1,12 +1,13 @@
 import { AlertTriangle, CheckCircle2, Clock, LifeBuoy, Radio, UserCheck } from 'lucide-react'
+import { useState } from 'react'
 import type { AdminSession } from '../../App'
 import DataTable from '../../components/admin/DataTable'
 import MetricCard from '../../components/admin/MetricCard'
 import PageHeader from '../../components/admin/PageHeader'
 import StatusPill from '../../components/admin/StatusPill'
-import { appendAuditEvent } from '../../lib/audit/auditLog'
+import { runAdminAction } from '../../lib/admin-actions/actionGateway'
 import { usePlatformData } from '../../lib/platform-data/PlatformDataContext'
-import { roleLabels } from '../../lib/permissions/permissions'
+import { hasPermission } from '../../lib/permissions/permissions'
 
 interface SupportCenterPageProps {
   session: AdminSession
@@ -21,7 +22,9 @@ function severityTone(severity: string) {
 
 export default function SupportCenterPage({ session }: SupportCenterPageProps) {
   const { data } = usePlatformData()
+  const [notice, setNotice] = useState('')
   const { organizations, supportIssues, venues } = data
+  const canManage = hasPermission(session.role, 'support.manage')
   const openIssues = supportIssues.filter(issue => issue.status !== 'Resolved')
   const criticalIssues = supportIssues.filter(issue => issue.severity === 'critical')
   const inactiveVenues = venues.filter(venue => venue.lastActivity.includes('days'))
@@ -29,14 +32,14 @@ export default function SupportCenterPage({ session }: SupportCenterPageProps) {
   const atRiskClients = organizations.filter(org => org.accountStatus === 'At Risk')
 
   const auditSupportAction = (action: string, scope: string) => {
-    appendAuditEvent({
-      actor: session.name,
-      actorRole: roleLabels[session.role],
+    const result = runAdminAction(session, {
+      permission: 'support.manage',
       scope,
       actionKey: `support.${action}.mock`,
       actionLabel: `${action} for ${scope}`,
       severity: 'notice',
     })
+    setNotice(result.ok ? `Support action for ${scope} recorded in Audit Logs.` : result.message)
   }
 
   return (
@@ -46,6 +49,7 @@ export default function SupportCenterPage({ session }: SupportCenterPageProps) {
         title="Support Center"
         description="Open issues, at-risk venues, inactive accounts, failed notification signals, and escalation workflow foundation."
       />
+      {notice && <p className="warning-copy">{notice}</p>}
 
       <div className="metrics-grid compact">
         <MetricCard label="Open Issues" value={String(openIssues.length)} delta="Support workload" tone={openIssues.length ? 'warn' : 'ok'} icon={<LifeBuoy size={16} />} />
@@ -72,15 +76,15 @@ export default function SupportCenterPage({ session }: SupportCenterPageProps) {
                 <p>{issue.issueType} / {issue.relatedSignal}</p>
                 <span>{issue.recommendedAction}</span>
                 <div className="support-actions">
-                  <button className="ghost-action" onClick={() => auditSupportAction('assigned_owner', issue.venueName)}>
+                  <button className="ghost-action" disabled={!canManage} onClick={() => auditSupportAction('assigned_owner', issue.venueName)}>
                     <UserCheck size={15} strokeWidth={1.8} />
                     Assign Owner
                   </button>
-                  <button className="ghost-action" onClick={() => auditSupportAction('marked_investigating', issue.venueName)}>
+                  <button className="ghost-action" disabled={!canManage} onClick={() => auditSupportAction('marked_investigating', issue.venueName)}>
                     <LifeBuoy size={15} strokeWidth={1.8} />
                     Investigating
                   </button>
-                  <button className="ghost-action" onClick={() => auditSupportAction('marked_resolved', issue.venueName)}>
+                  <button className="ghost-action" disabled={!canManage} onClick={() => auditSupportAction('marked_resolved', issue.venueName)}>
                     <CheckCircle2 size={15} strokeWidth={1.8} />
                     Resolve
                   </button>

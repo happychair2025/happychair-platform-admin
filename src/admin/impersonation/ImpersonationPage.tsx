@@ -5,10 +5,10 @@ import DataTable from '../../components/admin/DataTable'
 import MetricCard from '../../components/admin/MetricCard'
 import PageHeader from '../../components/admin/PageHeader'
 import StatusPill from '../../components/admin/StatusPill'
-import { appendAuditEvent } from '../../lib/audit/auditLog'
+import { runAdminAction } from '../../lib/admin-actions/actionGateway'
 import type { ImpersonationTarget } from '../../lib/mock-data/mockPlatform'
 import { usePlatformData } from '../../lib/platform-data/PlatformDataContext'
-import { hasPermission, roleLabels } from '../../lib/permissions/permissions'
+import { hasPermission } from '../../lib/permissions/permissions'
 
 export interface ActiveImpersonationSession {
   id: string
@@ -98,27 +98,26 @@ export default function ImpersonationPage({ session, activeSession, onStartSessi
     }
 
     if (!canUseDestructiveActions) {
-      appendAuditEvent({
-        actor: session.name,
-        actorRole: roleLabels[session.role],
+      const result = runAdminAction(session, {
+        permission: 'impersonation.destructive_actions',
         scope: activeSession.venueName ?? activeSession.organizationName,
-        actionKey: 'impersonation.destructive_action_blocked.mock',
-        actionLabel: `Blocked destructive action while viewing as ${activeSession.targetName}`,
+        actionKey: 'impersonation.destructive_action_reviewed.mock',
+        blockedActionKey: 'impersonation.destructive_action_blocked.mock',
+        actionLabel: `destructive action while viewing as ${activeSession.targetName}`,
         severity: 'critical',
       })
-      setActionNotice('Blocked and audited. This role cannot run destructive actions during impersonation.')
+      setActionNotice(result.ok ? 'Owner override recorded. Production still requires server confirmation and allowlisting.' : 'Blocked and audited. This role cannot run destructive actions during impersonation.')
       return
     }
 
-    appendAuditEvent({
-      actor: session.name,
-      actorRole: roleLabels[session.role],
+    const result = runAdminAction(session, {
+      permission: 'impersonation.destructive_actions',
       scope: activeSession.venueName ?? activeSession.organizationName,
       actionKey: 'impersonation.destructive_action_reviewed.mock',
       actionLabel: `Reviewed allowlisted destructive action while viewing as ${activeSession.targetName}`,
       severity: 'critical',
     })
-    setActionNotice('Owner override recorded. Production still requires server confirmation and allowlisting.')
+    setActionNotice(result.ok ? 'Owner override recorded. Production still requires server confirmation and allowlisting.' : result.message)
   }
 
   return (

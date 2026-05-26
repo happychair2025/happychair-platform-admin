@@ -5,10 +5,9 @@ import DataTable from '../../components/admin/DataTable'
 import MetricCard from '../../components/admin/MetricCard'
 import PageHeader from '../../components/admin/PageHeader'
 import StatusPill from '../../components/admin/StatusPill'
-import { appendAuditEvent } from '../../lib/audit/auditLog'
+import { runAdminAction } from '../../lib/admin-actions/actionGateway'
 import type { AgentDefinition } from '../../lib/mock-data/mockPlatform'
 import { usePlatformData } from '../../lib/platform-data/PlatformDataContext'
-import { roleLabels } from '../../lib/permissions/permissions'
 
 interface AgentsPageProps {
   session: AdminSession
@@ -33,6 +32,7 @@ export default function AgentsPage({ session }: AgentsPageProps) {
   const { data } = usePlatformData()
   const { agentDefinitions, agentEvents } = data
   const [selectedKey, setSelectedKey] = useState(agentDefinitions[0]?.key ?? 'marketing')
+  const [notice, setNotice] = useState('')
   const selectedAgent = useMemo(
     () => agentDefinitions.find(agent => agent.key === selectedKey) ?? agentDefinitions[0],
     [selectedKey],
@@ -43,14 +43,14 @@ export default function AgentsPage({ session }: AgentsPageProps) {
   const auditRequired = agentEvents.filter(event => event.auditRequired).length
 
   const auditAgentAction = (agent: AgentDefinition, action: string) => {
-    appendAuditEvent({
-      actor: session.name,
-      actorRole: roleLabels[session.role],
+    const result = runAdminAction(session, {
+      permission: 'agents.view',
       scope: agent.name,
       actionKey: `agent.${action}.mock`,
       actionLabel: `${agent.name} ${action.replace(/_/g, ' ')}`,
       severity: 'notice',
     })
+    setNotice(result.ok ? `${agent.name} review recorded in Audit Logs.` : result.message)
   }
 
   return (
@@ -60,6 +60,7 @@ export default function AgentsPage({ session }: AgentsPageProps) {
         title="AI Agents"
         description="Future Claude-agent workspace for monitoring, recommendations, summaries, drafts, classifications, and flags. This phase creates safe hooks only."
       />
+      {notice && <p className="warning-copy">{notice}</p>}
 
       <div className="metrics-grid compact">
         <MetricCard label="Agent Workflows" value={String(agentDefinitions.length)} delta="Marketing, email, support, finance, success" tone="neutral" icon={<Bot size={16} />} />

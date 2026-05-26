@@ -1,13 +1,13 @@
 import { AlertTriangle, CheckCircle2, HeartPulse, TrendingUp, UsersRound } from 'lucide-react'
+import { useState } from 'react'
 import type { AdminSession } from '../../App'
 import DataTable from '../../components/admin/DataTable'
 import MetricCard from '../../components/admin/MetricCard'
 import PageHeader from '../../components/admin/PageHeader'
 import StatusPill from '../../components/admin/StatusPill'
-import { appendAuditEvent } from '../../lib/audit/auditLog'
+import { runAdminAction } from '../../lib/admin-actions/actionGateway'
 import type { ClientHealthStatus } from '../../lib/mock-data/mockPlatform'
 import { usePlatformData } from '../../lib/platform-data/PlatformDataContext'
-import { roleLabels } from '../../lib/permissions/permissions'
 
 interface ClientHealthPageProps {
   session: AdminSession
@@ -22,6 +22,7 @@ function healthTone(status: ClientHealthStatus): 'ok' | 'warn' | 'danger' | 'inf
 
 export default function ClientHealthPage({ session }: ClientHealthPageProps) {
   const { data } = usePlatformData()
+  const [notice, setNotice] = useState('')
   const healthyClients = data.organizations.filter(org => org.healthStatus === 'Healthy' || org.healthStatus === 'Growing')
   const atRiskClients = data.organizations.filter(org => org.healthStatus === 'At Risk' || org.accountStatus === 'At Risk')
   const expansionCandidates = data.organizations.filter(org => org.healthStatus === 'Expansion Candidate' || org.expansionScore >= 80)
@@ -29,14 +30,14 @@ export default function ClientHealthPage({ session }: ClientHealthPageProps) {
   const supportRiskClients = data.supportIssues.filter(issue => issue.severity === 'critical' || issue.severity === 'warning')
 
   const recordReview = (scope: string) => {
-    appendAuditEvent({
-      actor: session.name,
-      actorRole: roleLabels[session.role],
+    const result = runAdminAction(session, {
+      permission: 'health.view',
       scope,
       actionKey: 'client_health.reviewed.mock',
       actionLabel: `Reviewed client health for ${scope}`,
       severity: 'notice',
     })
+    setNotice(result.ok ? `Client health review for ${scope} recorded in Audit Logs.` : result.message)
   }
 
   return (
@@ -46,6 +47,7 @@ export default function ClientHealthPage({ session }: ClientHealthPageProps) {
         title="Client Health"
         description="Health score, adoption, billing, support, setup, inactivity, and expansion signals across every client."
       />
+      {notice && <p className="warning-copy">{notice}</p>}
 
       <div className="metrics-grid compact">
         <MetricCard label="Healthy Clients" value={String(healthyClients.length)} delta="Healthy or growing" tone="ok" icon={<CheckCircle2 size={16} />} />

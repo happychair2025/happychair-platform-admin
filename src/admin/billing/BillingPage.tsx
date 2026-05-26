@@ -1,12 +1,13 @@
 import { AlertTriangle, CheckCircle2, CreditCard, FileText, RefreshCcw, ShieldCheck } from 'lucide-react'
+import { useState } from 'react'
 import type { AdminSession } from '../../App'
 import DataTable from '../../components/admin/DataTable'
 import MetricCard from '../../components/admin/MetricCard'
 import PageHeader from '../../components/admin/PageHeader'
 import StatusPill from '../../components/admin/StatusPill'
-import { appendAuditEvent } from '../../lib/audit/auditLog'
+import { runAdminAction } from '../../lib/admin-actions/actionGateway'
 import { usePlatformData } from '../../lib/platform-data/PlatformDataContext'
-import { hasPermission, roleLabels } from '../../lib/permissions/permissions'
+import { hasPermission } from '../../lib/permissions/permissions'
 
 interface BillingPageProps {
   session: AdminSession
@@ -22,6 +23,7 @@ function billingTone(status: string): 'ok' | 'warn' | 'danger' {
 
 export default function BillingPage({ session }: BillingPageProps) {
   const { data } = usePlatformData()
+  const [notice, setNotice] = useState('')
   const canManage = hasPermission(session.role, 'billing.manage')
   const currentAccounts = data.organizations.filter(org => org.billingStatus === 'Current')
   const trialAccounts = data.organizations.filter(org => org.billingStatus === 'Trial')
@@ -30,14 +32,14 @@ export default function BillingPage({ session }: BillingPageProps) {
   const totalMrr = data.organizations.reduce((sum, row) => sum + row.mrr, 0)
 
   const recordBillingReview = (scope: string, severity: 'notice' | 'warning' = 'notice') => {
-    appendAuditEvent({
-      actor: session.name,
-      actorRole: roleLabels[session.role],
+    const result = runAdminAction(session, {
+      permission: 'billing.manage',
       scope,
       actionKey: 'billing.reviewed.mock',
       actionLabel: `Reviewed billing account for ${scope}`,
       severity,
     })
+    setNotice(result.ok ? `Billing review for ${scope} recorded in Audit Logs.` : result.message)
   }
 
   return (
@@ -47,6 +49,7 @@ export default function BillingPage({ session }: BillingPageProps) {
         title="Billing"
         description="Billing status, payment risk, provider readiness, credits, discounts, and account-level finance action queues."
       />
+      {notice && <p className="warning-copy">{notice}</p>}
 
       <div className="metrics-grid compact">
         <MetricCard label="Current Accounts" value={String(currentAccounts.length)} delta="Billing healthy" tone="ok" icon={<CheckCircle2 size={16} />} />

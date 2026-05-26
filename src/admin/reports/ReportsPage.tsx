@@ -1,12 +1,13 @@
 import { BarChart3, CalendarClock, Download, FileBarChart, ShieldCheck, TableProperties } from 'lucide-react'
+import { useState } from 'react'
 import type { AdminSession } from '../../App'
 import DataTable from '../../components/admin/DataTable'
 import MetricCard from '../../components/admin/MetricCard'
 import PageHeader from '../../components/admin/PageHeader'
 import StatusPill from '../../components/admin/StatusPill'
-import { appendAuditEvent } from '../../lib/audit/auditLog'
+import { runAdminAction } from '../../lib/admin-actions/actionGateway'
 import { usePlatformData } from '../../lib/platform-data/PlatformDataContext'
-import { hasPermission, roleLabels } from '../../lib/permissions/permissions'
+import { hasPermission } from '../../lib/permissions/permissions'
 
 interface ReportsPageProps {
   session: AdminSession
@@ -78,6 +79,7 @@ function statusTone(status: ReportDefinition['status']): 'ok' | 'warn' | 'neutra
 
 export default function ReportsPage({ session }: ReportsPageProps) {
   const { data, sourceLabel } = usePlatformData()
+  const [notice, setNotice] = useState('')
   const canExport = hasPermission(session.role, 'reports.export')
   const readyReports = reportDefinitions.filter(report => report.status === 'Ready')
   const scheduledReports = reportDefinitions.filter(report => report.cadence !== 'On Demand')
@@ -90,14 +92,14 @@ export default function ReportsPage({ session }: ReportsPageProps) {
   ].filter(count => count > 0).length
 
   const recordExportReview = (report: ReportDefinition) => {
-    appendAuditEvent({
-      actor: session.name,
-      actorRole: roleLabels[session.role],
+    const result = runAdminAction(session, {
+      permission: 'reports.export',
       scope: report.name,
       actionKey: 'reports.export_reviewed.mock',
       actionLabel: `Reviewed export readiness for ${report.name}`,
-      severity: canExport ? 'notice' : 'warning',
+      severity: 'notice',
     })
+    setNotice(result.ok ? `${report.name} export review recorded in Audit Logs.` : result.message)
   }
 
   return (
@@ -107,6 +109,7 @@ export default function ReportsPage({ session }: ReportsPageProps) {
         title="Reports"
         description="Export-ready reporting structure for ownership, finance, support, client success, marketing, and future AI-agent summaries."
       />
+      {notice && <p className="warning-copy">{notice}</p>}
 
       <div className="metrics-grid compact">
         <MetricCard label="Report Templates" value={String(reportDefinitions.length)} delta="Role-specific outputs" tone="neutral" icon={<FileBarChart size={16} />} />

@@ -7,10 +7,10 @@ import InternalNotes from '../../components/admin/InternalNotes'
 import MetricCard from '../../components/admin/MetricCard'
 import PageHeader from '../../components/admin/PageHeader'
 import StatusPill from '../../components/admin/StatusPill'
-import { appendAuditEvent } from '../../lib/audit/auditLog'
+import { runAdminAction } from '../../lib/admin-actions/actionGateway'
 import { healthChecks } from '../../lib/mock-data/mockPlatform'
 import { usePlatformData } from '../../lib/platform-data/PlatformDataContext'
-import { hasPermission, roleLabels } from '../../lib/permissions/permissions'
+import { hasPermission } from '../../lib/permissions/permissions'
 
 interface VenueSupportPageProps {
   session: AdminSession
@@ -34,28 +34,27 @@ export default function VenueSupportPage({ session }: VenueSupportPageProps) {
       setMessage('Reason is required before starting a support session.')
       return
     }
-    appendAuditEvent({
-      actor: session.name,
-      actorRole: roleLabels[session.role],
+    const result = runAdminAction(session, {
+      permission: 'impersonation.start',
       scope: selectedVenue?.name ?? 'Venue',
       actionKey: 'impersonation.requested.mock',
       actionLabel: `Requested view-as support session: ${reason.trim()}`,
       severity: 'warning',
     })
-    setMessage('Support session request captured in the local audit trail.')
+    setMessage(result.ok ? 'Support session request captured in the local audit trail.' : result.message)
+    if (!result.ok) return
     setReason('')
   }
 
   const runHealthChecks = () => {
-    appendAuditEvent({
-      actor: session.name,
-      actorRole: roleLabels[session.role],
+    const result = runAdminAction(session, {
+      permission: 'troubleshooting.run',
       scope: selectedVenue?.name ?? 'Venue',
       actionKey: 'health.check.run.mock',
       actionLabel: 'Ran mock venue health checks',
       severity: 'notice',
     })
-    setMessage('Mock health check run captured in the local audit trail.')
+    setMessage(result.ok ? 'Mock health check run captured in the local audit trail.' : result.message)
   }
 
   if (!selectedVenue) {

@@ -44,7 +44,7 @@ import SupportCenterPage from '../../admin/support/SupportCenterPage'
 import VenueSupportPage from '../../admin/support/VenueSupportPage'
 import TroubleshootingPage from '../../admin/troubleshooting/TroubleshootingPage'
 import UsageAnalyticsPage from '../../admin/usage/UsageAnalyticsPage'
-import { appendAuditEvent } from '../../lib/audit/auditLog'
+import { runAdminAction } from '../../lib/admin-actions/actionGateway'
 import type { ImpersonationTarget } from '../../lib/mock-data/mockPlatform'
 import { usePlatformData } from '../../lib/platform-data/PlatformDataContext'
 import { hasPermission, roleLabels, type PermissionKey } from '../../lib/permissions/permissions'
@@ -145,22 +145,21 @@ export default function AppShell({ session, onLogout }: AppShellProps) {
       expiresAt: expiresAt.toISOString(),
     }
 
-    appendAuditEvent({
-      actor: session.name,
-      actorRole: roleLabels[session.role],
+    const result = runAdminAction(session, {
+      permission: 'impersonation.start',
       scope: target.venueName ?? target.organizationName,
       actionKey: 'impersonation.started.mock',
       actionLabel: `Started view-as session for ${target.name}`,
       severity: 'warning',
     })
+    if (!result.ok) return
     setImpersonationSession(nextSession)
   }
 
   const endImpersonationSession = (source: 'manual' | 'expired' = 'manual') => {
     if (!impersonationSession) return
-    appendAuditEvent({
-      actor: session.name,
-      actorRole: roleLabels[session.role],
+    runAdminAction(session, {
+      permission: 'impersonation.start',
       scope: impersonationSession.venueName ?? impersonationSession.organizationName,
       actionKey: source === 'expired' ? 'impersonation.expired.mock' : 'impersonation.ended.mock',
       actionLabel: `${source === 'expired' ? 'Expired' : 'Ended'} view-as session for ${impersonationSession.targetName}`,

@@ -5,10 +5,10 @@ import DataTable from '../../components/admin/DataTable'
 import MetricCard from '../../components/admin/MetricCard'
 import PageHeader from '../../components/admin/PageHeader'
 import StatusPill from '../../components/admin/StatusPill'
-import { appendAuditEvent } from '../../lib/audit/auditLog'
+import { runAdminAction } from '../../lib/admin-actions/actionGateway'
 import type { FeatureFlagRecord } from '../../lib/mock-data/mockPlatform'
 import { usePlatformData } from '../../lib/platform-data/PlatformDataContext'
-import { hasPermission, roleLabels } from '../../lib/permissions/permissions'
+import { hasPermission } from '../../lib/permissions/permissions'
 
 interface FeatureFlagsPageProps {
   session: AdminSession
@@ -41,23 +41,20 @@ export default function FeatureFlagsPage({ session }: FeatureFlagsPageProps) {
   const auditRequiredCount = flags.filter(flag => flag.requiresAudit).length
 
   const toggleFlag = (flag: FeatureFlagRecord) => {
-    if (!canManage) {
-      setNotice('Your role can review feature flags but cannot change them.')
+    const nextValue = !flagState[flag.key]
+    const result = runAdminAction(session, {
+      permission: 'feature_flags.manage',
+      scope: flag.name,
+      actionKey: 'feature_flag.changed.mock',
+      actionLabel: `${nextValue ? 'Enabled' : 'Disabled'} ${flag.name} after internal review`,
+      severity: flag.blastRadius === 'High' ? 'critical' : flag.requiresAudit ? 'warning' : 'notice',
+    })
+    if (!result.ok) {
+      setNotice(result.message)
       return
     }
 
-    setFlagState(current => {
-      const nextValue = !current[flag.key]
-      appendAuditEvent({
-        actor: session.name,
-        actorRole: roleLabels[session.role],
-        scope: flag.name,
-        actionKey: 'feature_flag.changed.mock',
-        actionLabel: `${nextValue ? 'Enabled' : 'Disabled'} ${flag.name} after internal review`,
-        severity: flag.blastRadius === 'High' ? 'critical' : flag.requiresAudit ? 'warning' : 'notice',
-      })
-      return { ...current, [flag.key]: nextValue }
-    })
+    setFlagState(current => ({ ...current, [flag.key]: nextValue }))
     setNotice(`${flag.name} mock change recorded in Audit Logs.`)
   }
 

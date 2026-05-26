@@ -4,9 +4,9 @@ import type { AdminSession } from '../../App'
 import ActivityTimeline from '../../components/admin/ActivityTimeline'
 import PageHeader from '../../components/admin/PageHeader'
 import StatusPill from '../../components/admin/StatusPill'
-import { appendAuditEvent } from '../../lib/audit/auditLog'
+import { runAdminAction } from '../../lib/admin-actions/actionGateway'
 import { usePlatformData } from '../../lib/platform-data/PlatformDataContext'
-import { roleLabels } from '../../lib/permissions/permissions'
+import { hasPermission } from '../../lib/permissions/permissions'
 
 interface TroubleshootingPageProps {
   session: AdminSession
@@ -23,6 +23,8 @@ export default function TroubleshootingPage({ session }: TroubleshootingPageProp
   const { data } = usePlatformData()
   const { activityEvents, platformHealthSignals, supportIssues } = data
   const [selectedIssueId, setSelectedIssueId] = useState(supportIssues[0]?.id ?? '')
+  const [notice, setNotice] = useState('')
+  const canRun = hasPermission(session.role, 'troubleshooting.run')
   const selectedIssue = supportIssues.find(issue => issue.id === selectedIssueId) ?? supportIssues[0]
   const relatedHealth = selectedIssue ? platformHealthSignals.filter(signal => {
     if (selectedIssue.issueType === 'Notification Delivery') return signal.checkKey === 'notification_delivery'
@@ -34,14 +36,14 @@ export default function TroubleshootingPage({ session }: TroubleshootingPageProp
   }) : []
 
   const auditAction = (action: string) => {
-    appendAuditEvent({
-      actor: session.name,
-      actorRole: roleLabels[session.role],
+    const result = runAdminAction(session, {
+      permission: 'troubleshooting.run',
       scope: selectedIssue?.venueName ?? 'Troubleshooting',
       actionKey: `troubleshooting.${action}.mock`,
       actionLabel: `${action} troubleshooting action for ${selectedIssue?.venueName ?? 'selected issue'}`,
       severity: action === 'escalated' ? 'warning' : 'notice',
     })
+    setNotice(result.ok ? `Troubleshooting action recorded for ${selectedIssue?.venueName ?? 'selected issue'}.` : result.message)
   }
 
   return (
@@ -51,6 +53,7 @@ export default function TroubleshootingPage({ session }: TroubleshootingPageProp
         title="Troubleshooting"
         description="Detected issue, severity, affected venue, probable cause, recommended action, related logs, and escalation path."
       />
+      {notice && <p className="warning-copy">{notice}</p>}
 
       <div className="troubleshooting-layout">
         <section className="panel">
@@ -111,15 +114,15 @@ export default function TroubleshootingPage({ session }: TroubleshootingPageProp
           </div>
 
           <div className="support-actions">
-            <button className="ghost-action" onClick={() => auditAction('investigating')}>
+            <button className="ghost-action" disabled={!canRun} onClick={() => auditAction('investigating')}>
               <FileSearch size={15} strokeWidth={1.8} />
               Mark Investigating
             </button>
-            <button className="ghost-action" onClick={() => auditAction('escalated')}>
+            <button className="ghost-action" disabled={!canRun} onClick={() => auditAction('escalated')}>
               <ArrowUpRight size={15} strokeWidth={1.8} />
               Open Escalation
             </button>
-            <button className="ghost-action" onClick={() => auditAction('resolved')}>
+            <button className="ghost-action" disabled={!canRun} onClick={() => auditAction('resolved')}>
               <CheckCircle2 size={15} strokeWidth={1.8} />
               Mark Resolved
             </button>

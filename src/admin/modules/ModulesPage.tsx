@@ -3,10 +3,10 @@ import { AlertTriangle, PackageCheck, ShieldCheck, X } from 'lucide-react'
 import type { AdminSession } from '../../App'
 import PageHeader from '../../components/admin/PageHeader'
 import StatusPill from '../../components/admin/StatusPill'
-import { appendAuditEvent } from '../../lib/audit/auditLog'
+import { runAdminAction } from '../../lib/admin-actions/actionGateway'
 import { moduleRegistry, type PlatformModule } from '../../lib/modules/registry'
 import { usePlatformData } from '../../lib/platform-data/PlatformDataContext'
-import { hasPermission, roleLabels } from '../../lib/permissions/permissions'
+import { hasPermission } from '../../lib/permissions/permissions'
 
 interface ModulesPageProps {
   session: AdminSession
@@ -28,18 +28,16 @@ export default function ModulesPage({ session }: ModulesPageProps) {
 
   const confirmToggle = () => {
     if (!pendingModule) return
-    setEnabled(current => {
-      const nextValue = !current[pendingModule.key]
-      appendAuditEvent({
-        actor: session.name,
-        actorRole: roleLabels[session.role],
-        scope: 'Module Registry',
-        actionKey: 'module.activation.changed.mock',
-        actionLabel: `${nextValue ? 'Enabled' : 'Disabled'} ${pendingModule.name} after mock safety review`,
-        severity: pendingMissingDependencies.length ? 'warning' : 'notice',
-      })
-      return { ...current, [pendingModule.key]: nextValue }
+    const nextValue = !enabled[pendingModule.key]
+    const result = runAdminAction(session, {
+      permission: 'modules.manage',
+      scope: 'Module Registry',
+      actionKey: 'module.activation.changed.mock',
+      actionLabel: `${nextValue ? 'Enabled' : 'Disabled'} ${pendingModule.name} after mock safety review`,
+      severity: pendingMissingDependencies.length ? 'warning' : 'notice',
     })
+    if (!result.ok) return
+    setEnabled(current => ({ ...current, [pendingModule.key]: nextValue }))
     setPendingModule(null)
   }
 

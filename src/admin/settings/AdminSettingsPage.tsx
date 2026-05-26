@@ -4,7 +4,7 @@ import DataTable from '../../components/admin/DataTable'
 import MetricCard from '../../components/admin/MetricCard'
 import PageHeader from '../../components/admin/PageHeader'
 import StatusPill from '../../components/admin/StatusPill'
-import { appendAuditEvent } from '../../lib/audit/auditLog'
+import { runAdminAction } from '../../lib/admin-actions/actionGateway'
 import { usePlatformData } from '../../lib/platform-data/PlatformDataContext'
 import { hasPermission, roleLabels, rolePermissions, type AdminRole, type PermissionKey } from '../../lib/permissions/permissions'
 
@@ -41,9 +41,8 @@ export default function AdminSettingsPage({ session }: AdminSettingsPageProps) {
   const highRiskFlags = data.featureFlags.filter(flag => flag.blastRadius === 'High')
 
   const auditSettingsReview = (action: string) => {
-    appendAuditEvent({
-      actor: session.name,
-      actorRole: roleLabels[session.role],
+    runAdminAction(session, {
+      permission: 'settings.view',
       scope: 'Admin Settings',
       actionKey: `settings.${action}.mock`,
       actionLabel: `${action.replace(/_/g, ' ')} reviewed`,
