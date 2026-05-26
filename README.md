@@ -8,3 +8,4 @@ Start here:
 
 - [AGENTS.md](AGENTS.md) - repo boundaries, product rules, and operating principles.
 - [Platform Admin Master Plan](PLATFORM_ADMIN_MASTER_PLAN.md) - full product, data, security, UI, and phased implementation plan.
+- [Supabase Read-Only Setup](docs/SUPABASE_READ_ONLY_SETUP.md) - safe connection path for platform views.

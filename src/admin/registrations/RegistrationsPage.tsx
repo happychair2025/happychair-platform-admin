@@ -3,7 +3,8 @@ import DataTable from '../../components/admin/DataTable'
 import MetricCard from '../../components/admin/MetricCard'
 import PageHeader from '../../components/admin/PageHeader'
 import StatusPill from '../../components/admin/StatusPill'
-import { registrations } from '../../lib/mock-data/mockPlatform'
+import type { RegistrationRecord } from '../../lib/mock-data/mockPlatform'
+import { usePlatformData } from '../../lib/platform-data/PlatformDataContext'
 
 const currency = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 })
 
@@ -13,7 +14,7 @@ function statusTone(status: string) {
   return 'info'
 }
 
-function countStatus(status: string) {
+function countStatus(registrations: RegistrationRecord[], status: string) {
   return registrations.filter(row => row.status === status).length
 }
 
@@ -25,12 +26,14 @@ function groupBy<T extends string>(items: T[]) {
 }
 
 export default function RegistrationsPage() {
+  const { data } = usePlatformData()
+  const { registrations } = data
   const projectedPipeline = registrations
     .filter(row => row.status !== 'Converted' && row.status !== 'Abandoned')
     .reduce((sum, row) => sum + row.projectedMrr, 0)
   const sourceCounts = groupBy(registrations.map(row => row.source))
   const propertyCounts = groupBy(registrations.map(row => row.propertyType))
-  const conversionRate = Math.round((countStatus('Converted') / registrations.length) * 100)
+  const conversionRate = Math.round((countStatus(registrations, 'Converted') / registrations.length) * 100)
   const setupIncomplete = registrations.filter(row => row.status === 'Setup Incomplete' || row.setupCompletion < 50)
 
   return (
@@ -43,8 +46,8 @@ export default function RegistrationsPage() {
 
       <div className="metrics-grid compact">
         <MetricCard label="Total Signups" value={String(registrations.length)} delta="Mock intake records" tone="ok" icon={<UserPlus size={16} />} />
-        <MetricCard label="Trial Starts" value={String(countStatus('Trial Started'))} delta="Setup in progress" tone="neutral" icon={<UsersRound size={16} />} />
-        <MetricCard label="Conversions" value={String(countStatus('Converted'))} delta={`${conversionRate}% conversion`} tone="ok" icon={<CheckCircle2 size={16} />} />
+        <MetricCard label="Trial Starts" value={String(countStatus(registrations, 'Trial Started'))} delta="Setup in progress" tone="neutral" icon={<UsersRound size={16} />} />
+        <MetricCard label="Conversions" value={String(countStatus(registrations, 'Converted'))} delta={`${conversionRate}% conversion`} tone="ok" icon={<CheckCircle2 size={16} />} />
         <MetricCard label="Pipeline MRR" value={currency.format(projectedPipeline)} delta="Projected from open signups" tone="warn" icon={<MousePointerClick size={16} />} />
       </div>
 
@@ -58,7 +61,7 @@ export default function RegistrationsPage() {
           </div>
           <div className="funnel-list">
             {['Demo Requested', 'Trial Started', 'Setup Incomplete', 'Converted', 'Abandoned'].map(status => {
-              const count = countStatus(status)
+              const count = countStatus(registrations, status)
               const width = Math.max(10, Math.round((count / registrations.length) * 100))
               return (
                 <div key={status} className="funnel-row">

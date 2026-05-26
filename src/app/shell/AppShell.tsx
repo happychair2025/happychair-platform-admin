@@ -41,6 +41,7 @@ import TroubleshootingPage from '../../admin/troubleshooting/TroubleshootingPage
 import UsageAnalyticsPage from '../../admin/usage/UsageAnalyticsPage'
 import { appendAuditEvent } from '../../lib/audit/auditLog'
 import type { ImpersonationTarget } from '../../lib/mock-data/mockPlatform'
+import { usePlatformData } from '../../lib/platform-data/PlatformDataContext'
 import { hasPermission, roleLabels, type PermissionKey } from '../../lib/permissions/permissions'
 
 type PageId =
@@ -104,6 +105,7 @@ interface AppShellProps {
 }
 
 export default function AppShell({ session, onLogout }: AppShellProps) {
+  const { sourceLabel, status, error } = usePlatformData()
   const visibleItems = useMemo(() => navItems.filter(item => hasPermission(session.role, item.permission)), [session.role])
   const [firstItem] = visibleItems
   const getInitialPage = (): PageId => {
@@ -269,7 +271,7 @@ export default function AppShell({ session, onLogout }: AppShellProps) {
             <input placeholder="Search clients, venues, modules" />
           </label>
           <div className="topbar-actions">
-            <span className="mock-badge">Mock data</span>
+            <span className={`mock-badge data-source-${status}`} title={error ?? sourceLabel}>{sourceLabel}</span>
             <button className="icon-button" aria-label="Notifications">
               <Bell size={17} strokeWidth={1.8} />
             </button>

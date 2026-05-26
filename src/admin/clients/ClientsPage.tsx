@@ -8,7 +8,8 @@ import InternalNotes from '../../components/admin/InternalNotes'
 import MetricCard from '../../components/admin/MetricCard'
 import PageHeader from '../../components/admin/PageHeader'
 import StatusPill from '../../components/admin/StatusPill'
-import { activityEvents, moduleActivations, organizations, properties, supportNotes, venues, type OrganizationSummary } from '../../lib/mock-data/mockPlatform'
+import type { OrganizationSummary } from '../../lib/mock-data/mockPlatform'
+import { usePlatformData } from '../../lib/platform-data/PlatformDataContext'
 
 const currency = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 })
 
@@ -23,12 +24,14 @@ interface ClientsPageProps {
 }
 
 export default function ClientsPage({ session }: ClientsPageProps) {
+  const { data } = usePlatformData()
+  const { activityEvents, moduleActivations, organizations, properties, supportNotes, venues } = data
   const [selectedId, setSelectedId] = useState(organizations[0]?.id ?? '')
   const selected = organizations.find(org => org.id === selectedId) ?? organizations[0]
-  const selectedProperties = properties.filter(property => property.organizationId === selected.id)
-  const selectedVenues = venues.filter(venue => venue.organizationId === selected.id)
-  const selectedActivity = activityEvents.filter(event => event.scopeId === selected.id)
-  const selectedModules = moduleActivations.filter(activation => activation.scopeId === selected.id || selectedVenues.some(venue => venue.id === activation.scopeId))
+  const selectedProperties = selected ? properties.filter(property => property.organizationId === selected.id) : []
+  const selectedVenues = selected ? venues.filter(venue => venue.organizationId === selected.id) : []
+  const selectedActivity = selected ? activityEvents.filter(event => event.scopeId === selected.id) : []
+  const selectedModules = selected ? moduleActivations.filter(activation => activation.scopeId === selected.id || selectedVenues.some(venue => venue.id === activation.scopeId)) : []
 
   return (
     <div className="page-stack">

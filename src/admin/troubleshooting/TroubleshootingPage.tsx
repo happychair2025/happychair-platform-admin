@@ -5,7 +5,7 @@ import ActivityTimeline from '../../components/admin/ActivityTimeline'
 import PageHeader from '../../components/admin/PageHeader'
 import StatusPill from '../../components/admin/StatusPill'
 import { appendAuditEvent } from '../../lib/audit/auditLog'
-import { activityEvents, platformHealthSignals, supportIssues } from '../../lib/mock-data/mockPlatform'
+import { usePlatformData } from '../../lib/platform-data/PlatformDataContext'
 import { roleLabels } from '../../lib/permissions/permissions'
 
 interface TroubleshootingPageProps {
@@ -20,24 +20,26 @@ function severityTone(severity: string) {
 }
 
 export default function TroubleshootingPage({ session }: TroubleshootingPageProps) {
+  const { data } = usePlatformData()
+  const { activityEvents, platformHealthSignals, supportIssues } = data
   const [selectedIssueId, setSelectedIssueId] = useState(supportIssues[0]?.id ?? '')
   const selectedIssue = supportIssues.find(issue => issue.id === selectedIssueId) ?? supportIssues[0]
-  const relatedHealth = platformHealthSignals.filter(signal => {
+  const relatedHealth = selectedIssue ? platformHealthSignals.filter(signal => {
     if (selectedIssue.issueType === 'Notification Delivery') return signal.checkKey === 'notification_delivery'
     if (selectedIssue.issueType === 'Device Offline') return signal.checkKey === 'device_presence'
     if (selectedIssue.issueType === 'QR Scan Failure') return signal.checkKey === 'qr_scans'
     if (selectedIssue.issueType === 'Module Configuration') return signal.checkKey === 'module_configuration'
     if (selectedIssue.issueType === 'Stalled Queue' || selectedIssue.issueType === 'High Escalations') return signal.checkKey === 'service_queue'
     return signal.status !== 'Passing'
-  })
+  }) : []
 
   const auditAction = (action: string) => {
     appendAuditEvent({
       actor: session.name,
       actorRole: roleLabels[session.role],
-      scope: selectedIssue.venueName,
+      scope: selectedIssue?.venueName ?? 'Troubleshooting',
       actionKey: `troubleshooting.${action}.mock`,
-      actionLabel: `${action} troubleshooting action for ${selectedIssue.venueName}`,
+      actionLabel: `${action} troubleshooting action for ${selectedIssue?.venueName ?? 'selected issue'}`,
       severity: action === 'escalated' ? 'warning' : 'notice',
     })
   }
@@ -63,7 +65,7 @@ export default function TroubleshootingPage({ session }: TroubleshootingPageProp
             {supportIssues.map(issue => (
               <button
                 key={issue.id}
-                className={issue.id === selectedIssue.id ? 'selected' : ''}
+                className={issue.id === selectedIssue?.id ? 'selected' : ''}
                 onClick={() => setSelectedIssueId(issue.id)}
               >
                 <div>
@@ -76,7 +78,7 @@ export default function TroubleshootingPage({ session }: TroubleshootingPageProp
           </div>
         </section>
 
-        <section className="detail-panel issue-detail-panel">
+        {selectedIssue ? <section className="detail-panel issue-detail-panel">
           <div className="detail-header">
             <div>
               <p className="eyebrow">{selectedIssue.organizationName} / {selectedIssue.propertyName}</p>
@@ -122,7 +124,7 @@ export default function TroubleshootingPage({ session }: TroubleshootingPageProp
               Mark Resolved
             </button>
           </div>
-        </section>
+        </section> : <section className="detail-panel"><div className="empty-state compact">No troubleshooting issues are available yet.</div></section>}
       </div>
 
       <div className="dashboard-grid">
@@ -150,4 +152,3 @@ export default function TroubleshootingPage({ session }: TroubleshootingPageProp
     </div>
   )
 }
-

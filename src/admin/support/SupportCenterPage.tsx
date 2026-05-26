@@ -5,7 +5,7 @@ import MetricCard from '../../components/admin/MetricCard'
 import PageHeader from '../../components/admin/PageHeader'
 import StatusPill from '../../components/admin/StatusPill'
 import { appendAuditEvent } from '../../lib/audit/auditLog'
-import { organizations, supportIssues, venues } from '../../lib/mock-data/mockPlatform'
+import { usePlatformData } from '../../lib/platform-data/PlatformDataContext'
 import { roleLabels } from '../../lib/permissions/permissions'
 
 interface SupportCenterPageProps {
@@ -20,6 +20,8 @@ function severityTone(severity: string) {
 }
 
 export default function SupportCenterPage({ session }: SupportCenterPageProps) {
+  const { data } = usePlatformData()
+  const { organizations, supportIssues, venues } = data
   const openIssues = supportIssues.filter(issue => issue.status !== 'Resolved')
   const criticalIssues = supportIssues.filter(issue => issue.severity === 'critical')
   const inactiveVenues = venues.filter(venue => venue.lastActivity.includes('days'))
@@ -159,4 +161,3 @@ export default function SupportCenterPage({ session }: SupportCenterPageProps) {
     </div>
   )
 }
-

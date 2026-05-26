@@ -3,16 +3,17 @@ import DataTable from '../../components/admin/DataTable'
 import MetricCard from '../../components/admin/MetricCard'
 import PageHeader from '../../components/admin/PageHeader'
 import StatusPill from '../../components/admin/StatusPill'
-import { billingRisks, revenueMetrics } from '../../lib/mock-data/mockPlatform'
+import type { RevenueMetricRecord } from '../../lib/mock-data/mockPlatform'
+import { usePlatformData } from '../../lib/platform-data/PlatformDataContext'
 
 const currency = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 })
 const readable = (value: string) => value.split('_').join(' ')
 
-function sumMetric(type: string) {
+function sumMetric(revenueMetrics: RevenueMetricRecord[], type: string) {
   return revenueMetrics.filter(row => row.metricType === type).reduce((sum, row) => sum + row.amount, 0)
 }
 
-function groupRevenueBy(key: 'plan' | 'moduleName' | 'marketType' | 'acquisitionChannel') {
+function groupRevenueBy(revenueMetrics: RevenueMetricRecord[], key: 'plan' | 'moduleName' | 'marketType' | 'acquisitionChannel') {
   return revenueMetrics.reduce<Record<string, number>>((acc, row) => {
     const label = row[key] ?? 'Unattributed'
     acc[label] = (acc[label] ?? 0) + row.amount
@@ -21,15 +22,17 @@ function groupRevenueBy(key: 'plan' | 'moduleName' | 'marketType' | 'acquisition
 }
 
 export default function RevenuePage() {
-  const mrr = sumMetric('mrr') + sumMetric('new_mrr') + sumMetric('expansion_mrr') - sumMetric('churned_mrr')
+  const { data } = usePlatformData()
+  const { billingRisks, revenueMetrics } = data
+  const mrr = sumMetric(revenueMetrics, 'mrr') + sumMetric(revenueMetrics, 'new_mrr') + sumMetric(revenueMetrics, 'expansion_mrr') - sumMetric(revenueMetrics, 'churned_mrr')
   const arr = mrr * 12
-  const newMrr = sumMetric('new_mrr')
-  const expansionMrr = sumMetric('expansion_mrr')
-  const churnedMrr = sumMetric('churned_mrr')
+  const newMrr = sumMetric(revenueMetrics, 'new_mrr')
+  const expansionMrr = sumMetric(revenueMetrics, 'expansion_mrr')
+  const churnedMrr = sumMetric(revenueMetrics, 'churned_mrr')
   const failedPayments = billingRisks.reduce((sum, row) => sum + row.amountAtRisk, 0)
-  const revenueByPlan = groupRevenueBy('plan')
-  const revenueByModule = groupRevenueBy('moduleName')
-  const revenueByMarket = groupRevenueBy('marketType')
+  const revenueByPlan = groupRevenueBy(revenueMetrics, 'plan')
+  const revenueByModule = groupRevenueBy(revenueMetrics, 'moduleName')
+  const revenueByMarket = groupRevenueBy(revenueMetrics, 'marketType')
   const arpa = Math.round(mrr / Math.max(1, new Set(revenueMetrics.map(row => row.organizationName)).size))
 
   return (

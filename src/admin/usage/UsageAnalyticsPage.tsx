@@ -3,7 +3,7 @@ import DataTable from '../../components/admin/DataTable'
 import MetricCard from '../../components/admin/MetricCard'
 import PageHeader from '../../components/admin/PageHeader'
 import StatusPill from '../../components/admin/StatusPill'
-import { moduleAdoption, moduleUsageGaps, usageAnalytics } from '../../lib/mock-data/mockPlatform'
+import { usePlatformData } from '../../lib/platform-data/PlatformDataContext'
 
 const currency = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 })
 
@@ -14,6 +14,8 @@ function trendTone(trend: string) {
 }
 
 export default function UsageAnalyticsPage() {
+  const { data } = usePlatformData()
+  const { moduleAdoption, moduleUsageGaps, usageAnalytics } = data
   const totalActiveUsers = usageAnalytics.reduce((sum, row) => sum + row.activeUsers7d, 0)
   const totalQrScans = usageAnalytics.reduce((sum, row) => sum + row.qrScans7d, 0)
   const totalRequests = usageAnalytics.reduce((sum, row) => sum + row.serviceRequests7d, 0)
@@ -173,4 +175,3 @@ export default function UsageAnalyticsPage() {
     </div>
   )
 }
-

@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { ShieldCheck } from 'lucide-react'
 import AppShell from './app/shell/AppShell'
+import { PlatformDataProvider } from './lib/platform-data/PlatformDataContext'
 import { roleLabels, type AdminRole } from './lib/permissions/permissions'
 
 export interface AdminSession {
@@ -32,7 +33,11 @@ export default function App() {
   }
 
   if (session) {
-    return <AppShell session={session} onLogout={() => setSession(null)} />
+    return (
+      <PlatformDataProvider>
+        <AppShell session={session} onLogout={() => setSession(null)} />
+      </PlatformDataProvider>
+    )
   }
 
   return (

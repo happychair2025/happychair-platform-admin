@@ -3,7 +3,7 @@ import DataTable from '../../components/admin/DataTable'
 import MetricCard from '../../components/admin/MetricCard'
 import PageHeader from '../../components/admin/PageHeader'
 import StatusPill from '../../components/admin/StatusPill'
-import { platformHealthSignals } from '../../lib/mock-data/mockPlatform'
+import { usePlatformData } from '../../lib/platform-data/PlatformDataContext'
 
 function statusTone(status: string) {
   if (status === 'Failing') return 'danger'
@@ -24,6 +24,8 @@ const iconMap = {
 }
 
 export default function SystemHealthPage() {
+  const { data } = usePlatformData()
+  const { platformHealthSignals } = data
   const failing = platformHealthSignals.filter(signal => signal.status === 'Failing')
   const warnings = platformHealthSignals.filter(signal => signal.status === 'Warning')
   const passing = platformHealthSignals.filter(signal => signal.status === 'Passing')
@@ -109,4 +111,3 @@ export default function SystemHealthPage() {
     </div>
   )
 }
-

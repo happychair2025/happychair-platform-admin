@@ -4,8 +4,8 @@ import type { AdminSession } from '../../App'
 import PageHeader from '../../components/admin/PageHeader'
 import StatusPill from '../../components/admin/StatusPill'
 import { appendAuditEvent } from '../../lib/audit/auditLog'
-import { moduleAdoption, moduleUsageGaps } from '../../lib/mock-data/mockPlatform'
 import { moduleRegistry, type PlatformModule } from '../../lib/modules/registry'
+import { usePlatformData } from '../../lib/platform-data/PlatformDataContext'
 import { hasPermission, roleLabels } from '../../lib/permissions/permissions'
 
 interface ModulesPageProps {
@@ -13,6 +13,8 @@ interface ModulesPageProps {
 }
 
 export default function ModulesPage({ session }: ModulesPageProps) {
+  const { data } = usePlatformData()
+  const { moduleAdoption, moduleUsageGaps } = data
   const [enabled, setEnabled] = useState<Record<string, boolean>>(() => Object.fromEntries(moduleRegistry.map(module => [module.key, module.status === 'active'])))
   const [selectedKey, setSelectedKey] = useState(moduleRegistry[0]?.key ?? '')
   const [pendingModule, setPendingModule] = useState<PlatformModule | null>(null)

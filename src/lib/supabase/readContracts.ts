@@ -77,8 +77,8 @@ export interface ReadOnlySupabaseAdapter {
   listImpersonationSessions(): Promise<ImpersonationSessionRecord[]>
   listAgentDefinitions(): Promise<AgentDefinition[]>
   listAgentEvents(): Promise<AgentEventRecord[]>
-  listSupportNotes(scope: { scopeType: SupportNote['scopeType']; scopeId: string }): Promise<SupportNote[]>
-  listActivityEvents(scope: { scopeType: ActivityEvent['scopeType']; scopeId: string }): Promise<ActivityEvent[]>
+  listSupportNotes(scope?: { scopeType: SupportNote['scopeType']; scopeId: string }): Promise<SupportNote[]>
+  listActivityEvents(scope?: { scopeType: ActivityEvent['scopeType']; scopeId: string }): Promise<ActivityEvent[]>
   listUsageAnalytics(): Promise<UsageAnalyticsRow[]>
 }
 

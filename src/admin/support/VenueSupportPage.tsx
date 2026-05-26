@@ -8,7 +8,8 @@ import MetricCard from '../../components/admin/MetricCard'
 import PageHeader from '../../components/admin/PageHeader'
 import StatusPill from '../../components/admin/StatusPill'
 import { appendAuditEvent } from '../../lib/audit/auditLog'
-import { activityEvents, healthChecks, moduleActivations, organizations, supportNotes, venues } from '../../lib/mock-data/mockPlatform'
+import { healthChecks } from '../../lib/mock-data/mockPlatform'
+import { usePlatformData } from '../../lib/platform-data/PlatformDataContext'
 import { hasPermission, roleLabels } from '../../lib/permissions/permissions'
 
 interface VenueSupportPageProps {
@@ -16,13 +17,15 @@ interface VenueSupportPageProps {
 }
 
 export default function VenueSupportPage({ session }: VenueSupportPageProps) {
+  const { data } = usePlatformData()
+  const { activityEvents, moduleActivations, organizations, supportNotes, venues } = data
   const [selectedVenueId, setSelectedVenueId] = useState(venues[0]?.id ?? '')
   const [reason, setReason] = useState('')
   const [message, setMessage] = useState('')
   const selectedVenue = venues.find(venue => venue.id === selectedVenueId) ?? venues[0]
-  const organization = organizations.find(org => org.id === selectedVenue.organizationId)
-  const venueActivity = activityEvents.filter(event => event.scopeId === selectedVenue.id || event.scopeId === selectedVenue.organizationId)
-  const venueModules = moduleActivations.filter(activation => activation.scopeId === selectedVenue.id || activation.scopeId === selectedVenue.organizationId)
+  const organization = selectedVenue ? organizations.find(org => org.id === selectedVenue.organizationId) : undefined
+  const venueActivity = selectedVenue ? activityEvents.filter(event => event.scopeId === selectedVenue.id || event.scopeId === selectedVenue.organizationId) : []
+  const venueModules = selectedVenue ? moduleActivations.filter(activation => activation.scopeId === selectedVenue.id || activation.scopeId === selectedVenue.organizationId) : []
   const canImpersonate = hasPermission(session.role, 'impersonation.start')
   const canRunChecks = hasPermission(session.role, 'troubleshooting.run')
 
@@ -34,7 +37,7 @@ export default function VenueSupportPage({ session }: VenueSupportPageProps) {
     appendAuditEvent({
       actor: session.name,
       actorRole: roleLabels[session.role],
-      scope: selectedVenue.name,
+      scope: selectedVenue?.name ?? 'Venue',
       actionKey: 'impersonation.requested.mock',
       actionLabel: `Requested view-as support session: ${reason.trim()}`,
       severity: 'warning',
@@ -47,12 +50,25 @@ export default function VenueSupportPage({ session }: VenueSupportPageProps) {
     appendAuditEvent({
       actor: session.name,
       actorRole: roleLabels[session.role],
-      scope: selectedVenue.name,
+      scope: selectedVenue?.name ?? 'Venue',
       actionKey: 'health.check.run.mock',
       actionLabel: 'Ran mock venue health checks',
       severity: 'notice',
     })
     setMessage('Mock health check run captured in the local audit trail.')
+  }
+
+  if (!selectedVenue) {
+    return (
+      <div className="page-stack">
+        <PageHeader
+          eyebrow="Support Workbench"
+          title="Venue Support Detail"
+          description="Operational status, live support signals, health checks, troubleshooting, notes, and impersonation foundation."
+        />
+        <div className="empty-state compact">No venues are available yet.</div>
+      </div>
+    )
   }
 
   return (
@@ -77,7 +93,7 @@ export default function VenueSupportPage({ session }: VenueSupportPageProps) {
         ))}
       </div>
 
-      <section className="status-band">
+      {selectedVenue && <section className="status-band">
         <div>
           <p className="eyebrow">{organization?.name} / {selectedVenue.propertyName}</p>
           <h2>{selectedVenue.name}</h2>
@@ -87,14 +103,16 @@ export default function VenueSupportPage({ session }: VenueSupportPageProps) {
           <StatusPill label={`Notifications: ${selectedVenue.notificationHealth}`} tone={selectedVenue.notificationHealth === 'Failing' ? 'danger' : selectedVenue.notificationHealth === 'Warning' ? 'warn' : 'ok'} />
           <StatusPill label={`${selectedVenue.openEscalations} escalations`} tone={selectedVenue.openEscalations > 0 ? 'warn' : 'ok'} />
         </div>
-      </section>
+      </section>}
 
-      <div className="metrics-grid compact">
+      {!selectedVenue && <div className="empty-state compact">No venues are available yet.</div>}
+
+      {selectedVenue && <div className="metrics-grid compact">
         <MetricCard label="Active Requests" value={String(selectedVenue.activeRequests)} tone={selectedVenue.activeRequests > 5 ? 'warn' : 'ok'} icon={<Radio size={16} />} />
         <MetricCard label="Staff Online" value={String(selectedVenue.staffOnline)} tone={selectedVenue.staffOnline ? 'ok' : 'danger'} icon={<Users size={16} />} />
         <MetricCard label="Devices Offline" value={String(selectedVenue.devicesOffline)} tone={selectedVenue.devicesOffline ? 'warn' : 'ok'} icon={<TabletSmartphone size={16} />} />
         <MetricCard label="Avg Response" value={selectedVenue.averageResponseSeconds ? `${selectedVenue.averageResponseSeconds}s` : 'N/A'} tone={selectedVenue.averageResponseSeconds > 120 ? 'warn' : 'ok'} icon={<Clock size={16} />} />
-      </div>
+      </div>}
 
       <div className="dashboard-grid">
         <section className="panel">

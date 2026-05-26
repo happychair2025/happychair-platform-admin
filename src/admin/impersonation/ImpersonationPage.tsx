@@ -6,7 +6,8 @@ import MetricCard from '../../components/admin/MetricCard'
 import PageHeader from '../../components/admin/PageHeader'
 import StatusPill from '../../components/admin/StatusPill'
 import { appendAuditEvent } from '../../lib/audit/auditLog'
-import { impersonationSessions, impersonationTargets, type ImpersonationTarget } from '../../lib/mock-data/mockPlatform'
+import type { ImpersonationTarget } from '../../lib/mock-data/mockPlatform'
+import { usePlatformData } from '../../lib/platform-data/PlatformDataContext'
 import { hasPermission, roleLabels } from '../../lib/permissions/permissions'
 
 export interface ActiveImpersonationSession {
@@ -61,6 +62,8 @@ function formatDateTime(value: string) {
 }
 
 export default function ImpersonationPage({ session, activeSession, onStartSession, onEndSession }: ImpersonationPageProps) {
+  const { data } = usePlatformData()
+  const { impersonationSessions, impersonationTargets } = data
   const [selectedTargetId, setSelectedTargetId] = useState(impersonationTargets[0]?.id ?? '')
   const [reason, setReason] = useState(quickReasons[0])
   const [validationMessage, setValidationMessage] = useState('')

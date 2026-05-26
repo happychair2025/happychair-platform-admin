@@ -6,7 +6,8 @@ import MetricCard from '../../components/admin/MetricCard'
 import PageHeader from '../../components/admin/PageHeader'
 import StatusPill from '../../components/admin/StatusPill'
 import { appendAuditEvent } from '../../lib/audit/auditLog'
-import { agentDefinitions, agentEvents, type AgentDefinition } from '../../lib/mock-data/mockPlatform'
+import type { AgentDefinition } from '../../lib/mock-data/mockPlatform'
+import { usePlatformData } from '../../lib/platform-data/PlatformDataContext'
 import { roleLabels } from '../../lib/permissions/permissions'
 
 interface AgentsPageProps {
@@ -29,12 +30,14 @@ function statusTone(status: string): 'ok' | 'warn' | 'info' | 'neutral' {
 }
 
 export default function AgentsPage({ session }: AgentsPageProps) {
+  const { data } = usePlatformData()
+  const { agentDefinitions, agentEvents } = data
   const [selectedKey, setSelectedKey] = useState(agentDefinitions[0]?.key ?? 'marketing')
   const selectedAgent = useMemo(
     () => agentDefinitions.find(agent => agent.key === selectedKey) ?? agentDefinitions[0],
     [selectedKey],
   )
-  const selectedEvents = agentEvents.filter(event => event.agentKey === selectedAgent.key)
+  const selectedEvents = selectedAgent ? agentEvents.filter(event => event.agentKey === selectedAgent.key) : []
   const monitoringReady = agentDefinitions.filter(agent => agent.status === 'Monitoring Ready').length
   const needsReview = agentEvents.filter(event => event.status === 'Needs Review' || event.status === 'Queued').length
   const auditRequired = agentEvents.filter(event => event.auditRequired).length
@@ -89,7 +92,7 @@ export default function AgentsPage({ session }: AgentsPageProps) {
               return (
                 <button
                   key={agent.key}
-                  className={`agent-card${agent.key === selectedAgent.key ? ' selected' : ''}`}
+                  className={`agent-card${agent.key === selectedAgent?.key ? ' selected' : ''}`}
                   onClick={() => setSelectedKey(agent.key)}
                 >
                   <span className="module-icon" aria-hidden="true">
@@ -106,7 +109,7 @@ export default function AgentsPage({ session }: AgentsPageProps) {
           </div>
         </section>
 
-        <aside className="detail-panel agent-detail-panel">
+        {selectedAgent ? <aside className="detail-panel agent-detail-panel">
           <div className="detail-header">
             <div>
               <p className="eyebrow">Agent Contract</p>
@@ -155,7 +158,7 @@ export default function AgentsPage({ session }: AgentsPageProps) {
           <button className="primary-action" onClick={() => auditAgentAction(selectedAgent, 'draft_reviewed')}>
             Record Mock Review
           </button>
-        </aside>
+        </aside> : <aside className="detail-panel"><div className="empty-state compact">No agent contracts are available yet.</div></aside>}
       </div>
 
       <DataTable

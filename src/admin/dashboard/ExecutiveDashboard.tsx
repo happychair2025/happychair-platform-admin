@@ -3,11 +3,15 @@ import DataTable from '../../components/admin/DataTable'
 import MetricCard from '../../components/admin/MetricCard'
 import PageHeader from '../../components/admin/PageHeader'
 import StatusPill from '../../components/admin/StatusPill'
-import { executiveMetrics, insightCards, organizations } from '../../lib/mock-data/mockPlatform'
+import { executiveMetrics, insightCards } from '../../lib/mock-data/mockPlatform'
+import { usePlatformData } from '../../lib/platform-data/PlatformDataContext'
 
 const currency = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 })
 
 export default function ExecutiveDashboard() {
+  const { data } = usePlatformData()
+  const { organizations } = data
+
   return (
     <div className="page-stack">
       <PageHeader
@@ -130,4 +134,3 @@ export default function ExecutiveDashboard() {
     </div>
   )
 }
-
