@@ -1710,6 +1710,19 @@ td {
   border-color: rgba(245, 158, 11, 0.34);
 }
 
+.remediation-output {
+  display: grid;
+  gap: 12px;
+  padding: 14px;
+  background: rgba(16, 185, 129, 0.07);
+  border: 1px solid rgba(16, 185, 129, 0.28);
+  border-radius: 8px;
+}
+
+.remediation-output .runbook-meta-grid strong {
+  overflow-wrap: anywhere;
+}
+
 .health-signal-grid {
   grid-template-columns: repeat(4, minmax(0, 1fr));
 }

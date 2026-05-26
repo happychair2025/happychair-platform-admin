@@ -1,8 +1,9 @@
-import type { SupportIssue } from '../mock-data/mockPlatform'
+import type { PlatformHealthSignal, SupportIssue } from '../mock-data/mockPlatform'
 
 export type RunbookCategory = 'Client Configuration' | 'Data / Queue Repair' | 'Universal Code Issue'
 export type RunbookScope = 'Single Venue' | 'Client / Property' | 'Module-Wide' | 'All Tenants'
 export type RunbookConfidence = 'High' | 'Medium' | 'Needs Engineering'
+export type RunbookActionType = 'safe_fix' | 'incident_packet'
 
 export interface SupportRunbook {
   id: string
@@ -19,6 +20,22 @@ export interface SupportRunbook {
   engineeringPath: string
   auditActionKey: string
   owner: 'Support' | 'Engineering' | 'Client Success' | 'Finance'
+}
+
+export interface RunbookActionOutcome {
+  id: string
+  type: RunbookActionType
+  title: string
+  status: 'Recorded' | 'Ready For Server Action' | 'Engineering Review'
+  severity: 'notice' | 'warning'
+  owner: SupportRunbook['owner']
+  scope: RunbookScope
+  createdAt: string
+  primaryMessage: string
+  evidence: string[]
+  nextSteps: string[]
+  blockedActions: string[]
+  auditActionKey: string
 }
 
 export const supportRunbooks: SupportRunbook[] = [
@@ -139,4 +156,44 @@ export const supportRunbooks: SupportRunbook[] = [
 export function getRunbooksForIssue(issueType?: SupportIssue['issueType']) {
   if (!issueType) return supportRunbooks
   return supportRunbooks.filter(runbook => runbook.matchesIssueTypes.includes(issueType))
+}
+
+export function createRunbookOutcome(
+  runbook: SupportRunbook,
+  issue: SupportIssue,
+  relatedSignals: PlatformHealthSignal[],
+  actionType: RunbookActionType,
+): RunbookActionOutcome {
+  const isIncident = actionType === 'incident_packet'
+  const evidence = [
+    `${issue.issueType} at ${issue.venueName}`,
+    issue.relatedSignal,
+    issue.probableCause,
+    ...relatedSignals.slice(0, 3).map(signal => `${signal.label}: ${signal.message}`),
+  ]
+
+  return {
+    id: `${runbook.id}-${Date.now()}`,
+    type: actionType,
+    title: isIncident ? 'Engineering Incident Packet' : 'Support Safe Fix Packet',
+    status: isIncident ? 'Engineering Review' : runbook.serverSideRequired ? 'Ready For Server Action' : 'Recorded',
+    severity: isIncident || runbook.category === 'Universal Code Issue' ? 'warning' : 'notice',
+    owner: isIncident ? 'Engineering' : runbook.owner,
+    scope: runbook.scope,
+    createdAt: new Date().toISOString(),
+    primaryMessage: isIncident
+      ? `${runbook.title} has been packaged for engineering with scope, evidence, blocked support actions, and mitigation notes.`
+      : `${runbook.title} is scoped as a support-safe remediation path for ${issue.venueName}.`,
+    evidence,
+    nextSteps: isIncident
+      ? [
+        'Create engineering incident from this packet.',
+        'Attach affected client and health signal evidence.',
+        runbook.engineeringPath,
+        'Review feature flag or module mitigation before customer communication.',
+      ]
+      : runbook.safeActions,
+    blockedActions: runbook.blockedActions,
+    auditActionKey: isIncident ? 'runbook.engineering_incident_packet.mock' : runbook.auditActionKey,
+  }
 }

@@ -1,11 +1,11 @@
 import { useState } from 'react'
-import { AlertTriangle, ArrowUpRight, CheckCircle2, ClipboardList, Code2, FileSearch, RotateCw, ShieldAlert, Wrench } from 'lucide-react'
+import { AlertTriangle, ArrowUpRight, CheckCircle2, ClipboardList, Code2, FileCheck2, FileSearch, RotateCw, ShieldAlert, Wrench } from 'lucide-react'
 import type { AdminSession } from '../../App'
 import ActivityTimeline from '../../components/admin/ActivityTimeline'
 import PageHeader from '../../components/admin/PageHeader'
 import StatusPill from '../../components/admin/StatusPill'
 import { runAdminAction } from '../../lib/admin-actions/actionGateway'
-import { getRunbooksForIssue, type RunbookCategory, type SupportRunbook } from '../../lib/support/runbooks'
+import { createRunbookOutcome, getRunbooksForIssue, type RunbookActionOutcome, type RunbookCategory, type SupportRunbook } from '../../lib/support/runbooks'
 import { usePlatformData } from '../../lib/platform-data/PlatformDataContext'
 import { hasPermission } from '../../lib/permissions/permissions'
 
@@ -31,6 +31,7 @@ export default function TroubleshootingPage({ session }: TroubleshootingPageProp
   const { activityEvents, platformHealthSignals, supportIssues } = data
   const [selectedIssueId, setSelectedIssueId] = useState(supportIssues[0]?.id ?? '')
   const [selectedRunbookId, setSelectedRunbookId] = useState('')
+  const [lastOutcome, setLastOutcome] = useState<RunbookActionOutcome | null>(null)
   const [notice, setNotice] = useState('')
   const canRun = hasPermission(session.role, 'troubleshooting.run')
   const selectedIssue = supportIssues.find(issue => issue.id === selectedIssueId) ?? supportIssues[0]
@@ -73,6 +74,9 @@ export default function TroubleshootingPage({ session }: TroubleshootingPageProp
     setNotice(result.ok
       ? `${action === 'safe_fix' ? 'Safe fix recorded' : 'Incident packet recorded'} for ${runbook.title}.`
       : result.message)
+    if (result.ok && selectedIssue) {
+      setLastOutcome(createRunbookOutcome(runbook, selectedIssue, relatedHealth, action))
+    }
   }
 
   return (
@@ -101,6 +105,7 @@ export default function TroubleshootingPage({ session }: TroubleshootingPageProp
                 onClick={() => {
                   setSelectedIssueId(issue.id)
                   setSelectedRunbookId('')
+                  setLastOutcome(null)
                 }}
               >
                 <div>
@@ -175,7 +180,10 @@ export default function TroubleshootingPage({ session }: TroubleshootingPageProp
                   <button
                     key={runbook.id}
                     className={`runbook-card${runbook.id === selectedRunbook.id ? ' selected' : ''}`}
-                    onClick={() => setSelectedRunbookId(runbook.id)}
+                    onClick={() => {
+                      setSelectedRunbookId(runbook.id)
+                      setLastOutcome(null)
+                    }}
                   >
                     <span className="module-icon" aria-hidden="true">
                       {runbook.category === 'Universal Code Issue' ? <Code2 size={17} strokeWidth={1.8} /> : <ClipboardList size={17} strokeWidth={1.8} />}
@@ -229,6 +237,40 @@ export default function TroubleshootingPage({ session }: TroubleshootingPageProp
                   Create Incident Packet
                 </button>
               </div>
+
+              {lastOutcome && (
+                <section className="remediation-output" aria-live="polite">
+                  <div className="panel-header">
+                    <div>
+                      <h2>{lastOutcome.title}</h2>
+                      <span>{lastOutcome.primaryMessage}</span>
+                    </div>
+                    <StatusPill label={lastOutcome.status} tone={lastOutcome.severity === 'warning' ? 'warn' : 'ok'} />
+                  </div>
+
+                  <div className="runbook-meta-grid">
+                    <div><span>Packet ID</span><strong>{lastOutcome.id}</strong></div>
+                    <div><span>Owner</span><strong>{lastOutcome.owner}</strong></div>
+                    <div><span>Scope</span><strong>{lastOutcome.scope}</strong></div>
+                    <div><span>Audit Action</span><strong>{lastOutcome.auditActionKey}</strong></div>
+                  </div>
+
+                  <div className="runbook-columns">
+                    <div>
+                      <h3>Evidence</h3>
+                      {lastOutcome.evidence.map(item => <p key={item}><FileSearch size={15} strokeWidth={1.8} />{item}</p>)}
+                    </div>
+                    <div>
+                      <h3>Next Steps</h3>
+                      {lastOutcome.nextSteps.map(item => <p key={item}><FileCheck2 size={15} strokeWidth={1.8} />{item}</p>)}
+                    </div>
+                    <div>
+                      <h3>Do Not Do</h3>
+                      {lastOutcome.blockedActions.map(item => <p key={item}><ShieldAlert size={15} strokeWidth={1.8} />{item}</p>)}
+                    </div>
+                  </div>
+                </section>
+              )}
             </div>
           )}
         </section> : <section className="detail-panel"><div className="empty-state compact">No troubleshooting issues are available yet.</div></section>}
