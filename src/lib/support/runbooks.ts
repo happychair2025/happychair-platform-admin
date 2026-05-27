@@ -4,6 +4,7 @@ export type RunbookCategory = 'Client Configuration' | 'Data / Queue Repair' | '
 export type RunbookScope = 'Single Venue' | 'Client / Property' | 'Module-Wide' | 'All Tenants'
 export type RunbookConfidence = 'High' | 'Medium' | 'Needs Engineering'
 export type RunbookActionType = 'safe_fix' | 'incident_packet'
+export type RunbookOutcomeStatus = 'Recorded' | 'Ready For Server Action' | 'Engineering Review' | 'Queued For Server Action' | 'Handed Off' | 'Resolved'
 
 export interface SupportRunbook {
   id: string
@@ -31,7 +32,7 @@ export interface RunbookActionOutcome {
   propertyName: string
   venueName: string
   issueType: SupportIssue['issueType']
-  status: 'Recorded' | 'Ready For Server Action' | 'Engineering Review'
+  status: RunbookOutcomeStatus
   severity: 'notice' | 'warning'
   owner: SupportRunbook['owner']
   scope: RunbookScope

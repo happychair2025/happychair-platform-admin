@@ -670,6 +670,7 @@ Support should see:
 - Impact scope assessment
 - Safe support actions
 - Blocked actions
+- Packet lifecycle state
 - Related logs/events
 - Escalation option
 
@@ -1252,6 +1253,7 @@ Build:
 - Diagnose and remediate runbooks
 - Impact scope detection
 - Remediation packet queue
+- Remediation packet lifecycle controls
 - System status view
 - Support action logging
 - Issue severity states
@@ -1265,6 +1267,7 @@ Exit criteria:
 - Support can see whether an issue is venue-scoped, client-scoped, module-wide, or universal before acting.
 - Troubleshooting actions are audit-logged.
 - Safe-fix and incident packets stay visible in a searchable support queue.
+- Support can move packets through queued, handed-off, and resolved states.
 - Universal code issues route to engineering incident packets instead of support-side mutation.
 - System health can be shown by client and venue.
 

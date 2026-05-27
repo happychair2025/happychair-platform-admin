@@ -7,7 +7,7 @@ import PageHeader from '../../components/admin/PageHeader'
 import StatusPill from '../../components/admin/StatusPill'
 import { runAdminAction } from '../../lib/admin-actions/actionGateway'
 import type { PlatformHealthSignal, SupportIssue } from '../../lib/mock-data/mockPlatform'
-import { createImpactAssessment, createRunbookOutcome, getRunbooksForIssue, type ImpactAssessment, type RunbookActionOutcome, type RunbookCategory, type SupportRunbook } from '../../lib/support/runbooks'
+import { createImpactAssessment, createRunbookOutcome, getRunbooksForIssue, type ImpactAssessment, type RunbookActionOutcome, type RunbookCategory, type RunbookOutcomeStatus, type SupportRunbook } from '../../lib/support/runbooks'
 import { usePlatformData } from '../../lib/platform-data/PlatformDataContext'
 import { hasPermission } from '../../lib/permissions/permissions'
 
@@ -32,6 +32,13 @@ function impactTone(severity: ImpactAssessment['severity']): 'info' | 'warn' | '
   if (severity === 'critical') return 'danger'
   if (severity === 'warning') return 'warn'
   return 'info'
+}
+
+function outcomeTone(status: RunbookOutcomeStatus, severity: RunbookActionOutcome['severity']): 'ok' | 'warn' | 'info' {
+  if (status === 'Resolved') return 'ok'
+  if (status === 'Handed Off' || status === 'Queued For Server Action') return 'info'
+  if (severity === 'warning') return 'warn'
+  return 'ok'
 }
 
 function formatDateTime(value: string) {
@@ -107,6 +114,26 @@ export default function TroubleshootingPage({ session }: TroubleshootingPageProp
       setLastOutcome(outcome)
       setRemediationQueue(current => [outcome, ...current].slice(0, 12))
     }
+  }
+
+  const updateOutcomeStatus = (outcome: RunbookActionOutcome, nextStatus: RunbookOutcomeStatus) => {
+    const result = runAdminAction(session, {
+      permission: 'troubleshooting.run',
+      scope: outcome.venueName,
+      actionKey: `runbook.lifecycle.${nextStatus.toLowerCase().replace(/\s+/g, '_')}.mock`,
+      actionLabel: `${outcome.title} moved to ${nextStatus} for ${outcome.venueName}`,
+      severity: nextStatus === 'Resolved' ? 'notice' : 'warning',
+    })
+
+    if (!result.ok) {
+      setNotice(result.message)
+      return
+    }
+
+    const nextOutcome = { ...outcome, status: nextStatus }
+    setLastOutcome(nextOutcome)
+    setRemediationQueue(current => current.map(item => item.id === outcome.id ? nextOutcome : item))
+    setNotice(`${outcome.title} moved to ${nextStatus}.`)
   }
 
   return (
@@ -302,7 +329,7 @@ export default function TroubleshootingPage({ session }: TroubleshootingPageProp
                       <h2>{lastOutcome.title}</h2>
                       <span>{lastOutcome.primaryMessage}</span>
                     </div>
-                    <StatusPill label={lastOutcome.status} tone={lastOutcome.severity === 'warning' ? 'warn' : 'ok'} />
+                    <StatusPill label={lastOutcome.status} tone={outcomeTone(lastOutcome.status, lastOutcome.severity)} />
                   </div>
 
                   <div className="runbook-meta-grid">
@@ -325,6 +352,27 @@ export default function TroubleshootingPage({ session }: TroubleshootingPageProp
                       <h3>Do Not Do</h3>
                       {lastOutcome.blockedActions.map(item => <p key={item}><ShieldAlert size={15} strokeWidth={1.8} />{item}</p>)}
                     </div>
+                  </div>
+
+                  <div className="support-actions">
+                    {lastOutcome.type === 'safe_fix' && lastOutcome.status === 'Ready For Server Action' && (
+                      <button className="ghost-action" disabled={!canRun} onClick={() => updateOutcomeStatus(lastOutcome, 'Queued For Server Action')}>
+                        <RotateCw size={15} strokeWidth={1.8} />
+                        Queue Server Action
+                      </button>
+                    )}
+                    {lastOutcome.type === 'incident_packet' && lastOutcome.status === 'Engineering Review' && (
+                      <button className="ghost-action" disabled={!canRun} onClick={() => updateOutcomeStatus(lastOutcome, 'Handed Off')}>
+                        <ArrowUpRight size={15} strokeWidth={1.8} />
+                        Mark Engineering Handoff
+                      </button>
+                    )}
+                    {lastOutcome.status !== 'Resolved' && (
+                      <button className="ghost-action" disabled={!canRun} onClick={() => updateOutcomeStatus(lastOutcome, 'Resolved')}>
+                        <CheckCircle2 size={15} strokeWidth={1.8} />
+                        Mark Resolved
+                      </button>
+                    )}
                   </div>
                 </section>
               )}
@@ -369,7 +417,7 @@ export default function TroubleshootingPage({ session }: TroubleshootingPageProp
             header: 'Status',
             sortable: true,
             searchValue: row => row.status,
-            render: row => <StatusPill label={row.status} tone={row.severity === 'warning' ? 'warn' : 'ok'} />,
+            render: row => <StatusPill label={row.status} tone={outcomeTone(row.status, row.severity)} />,
           },
           {
             key: 'created',
