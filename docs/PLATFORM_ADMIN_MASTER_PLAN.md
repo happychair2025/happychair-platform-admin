@@ -667,6 +667,7 @@ Support should see:
 - Probable cause
 - Recommended action
 - Matching support runbook
+- Impact scope assessment
 - Safe support actions
 - Blocked actions
 - Related logs/events
@@ -1249,6 +1250,7 @@ Build:
 - Health checks
 - Troubleshooting panel
 - Diagnose and remediate runbooks
+- Impact scope detection
 - Remediation packet queue
 - System status view
 - Support action logging
@@ -1260,6 +1262,7 @@ Exit criteria:
 
 - Support can identify problems quickly.
 - Support can distinguish client configuration, data/queue repair, and universal code issues.
+- Support can see whether an issue is venue-scoped, client-scoped, module-wide, or universal before acting.
 - Troubleshooting actions are audit-logged.
 - Safe-fix and incident packets stay visible in a searchable support queue.
 - Universal code issues route to engineering incident packets instead of support-side mutation.

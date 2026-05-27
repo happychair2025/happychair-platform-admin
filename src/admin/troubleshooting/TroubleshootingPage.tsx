@@ -1,12 +1,13 @@
 import { useState } from 'react'
-import { AlertTriangle, ArrowUpRight, CheckCircle2, ClipboardList, Code2, FileCheck2, FileSearch, RotateCw, ShieldAlert, Wrench } from 'lucide-react'
+import { AlertTriangle, ArrowUpRight, CheckCircle2, ClipboardList, Code2, FileCheck2, FileSearch, Radar, RotateCw, ShieldAlert, Wrench } from 'lucide-react'
 import type { AdminSession } from '../../App'
 import ActivityTimeline from '../../components/admin/ActivityTimeline'
 import DataTable from '../../components/admin/DataTable'
 import PageHeader from '../../components/admin/PageHeader'
 import StatusPill from '../../components/admin/StatusPill'
 import { runAdminAction } from '../../lib/admin-actions/actionGateway'
-import { createRunbookOutcome, getRunbooksForIssue, type RunbookActionOutcome, type RunbookCategory, type SupportRunbook } from '../../lib/support/runbooks'
+import type { PlatformHealthSignal, SupportIssue } from '../../lib/mock-data/mockPlatform'
+import { createImpactAssessment, createRunbookOutcome, getRunbooksForIssue, type ImpactAssessment, type RunbookActionOutcome, type RunbookCategory, type SupportRunbook } from '../../lib/support/runbooks'
 import { usePlatformData } from '../../lib/platform-data/PlatformDataContext'
 import { hasPermission } from '../../lib/permissions/permissions'
 
@@ -27,6 +28,12 @@ function categoryTone(category: RunbookCategory): 'ok' | 'warn' | 'danger' {
   return 'ok'
 }
 
+function impactTone(severity: ImpactAssessment['severity']): 'info' | 'warn' | 'danger' {
+  if (severity === 'critical') return 'danger'
+  if (severity === 'warning') return 'warn'
+  return 'info'
+}
+
 function formatDateTime(value: string) {
   return new Intl.DateTimeFormat('en-US', {
     month: 'short',
@@ -34,6 +41,17 @@ function formatDateTime(value: string) {
     hour: 'numeric',
     minute: '2-digit',
   }).format(new Date(value))
+}
+
+function getDirectHealthSignals(issueType: SupportIssue['issueType'], signals: PlatformHealthSignal[]) {
+  return signals.filter(signal => {
+    if (issueType === 'Notification Delivery') return signal.checkKey === 'notification_delivery'
+    if (issueType === 'Device Offline') return signal.checkKey === 'device_presence'
+    if (issueType === 'QR Scan Failure') return signal.checkKey === 'qr_scans'
+    if (issueType === 'Module Configuration') return signal.checkKey === 'module_configuration'
+    if (issueType === 'Stalled Queue' || issueType === 'High Escalations') return signal.checkKey === 'service_queue'
+    return false
+  })
 }
 
 export default function TroubleshootingPage({ session }: TroubleshootingPageProps) {
@@ -48,14 +66,13 @@ export default function TroubleshootingPage({ session }: TroubleshootingPageProp
   const selectedIssue = supportIssues.find(issue => issue.id === selectedIssueId) ?? supportIssues[0]
   const matchingRunbooks = getRunbooksForIssue(selectedIssue?.issueType)
   const selectedRunbook = matchingRunbooks.find(runbook => runbook.id === selectedRunbookId) ?? matchingRunbooks[0]
-  const relatedHealth = selectedIssue ? platformHealthSignals.filter(signal => {
-    if (selectedIssue.issueType === 'Notification Delivery') return signal.checkKey === 'notification_delivery'
-    if (selectedIssue.issueType === 'Device Offline') return signal.checkKey === 'device_presence'
-    if (selectedIssue.issueType === 'QR Scan Failure') return signal.checkKey === 'qr_scans'
-    if (selectedIssue.issueType === 'Module Configuration') return signal.checkKey === 'module_configuration'
-    if (selectedIssue.issueType === 'Stalled Queue' || selectedIssue.issueType === 'High Escalations') return signal.checkKey === 'service_queue'
-    return signal.status !== 'Passing'
-  }) : []
+  const directHealthSignals = selectedIssue ? getDirectHealthSignals(selectedIssue.issueType, platformHealthSignals) : []
+  const relatedHealth = selectedIssue && directHealthSignals.length
+    ? directHealthSignals
+    : selectedIssue ? platformHealthSignals.filter(signal => signal.status !== 'Passing') : []
+  const impactAssessment = selectedIssue && selectedRunbook
+    ? createImpactAssessment(selectedIssue, selectedRunbook, directHealthSignals, supportIssues)
+    : null
 
   const auditAction = (action: string) => {
     const result = runAdminAction(session, {
@@ -86,7 +103,7 @@ export default function TroubleshootingPage({ session }: TroubleshootingPageProp
       ? `${action === 'safe_fix' ? 'Safe fix recorded' : 'Incident packet recorded'} for ${runbook.title}.`
       : result.message)
     if (result.ok && selectedIssue) {
-      const outcome = createRunbookOutcome(runbook, selectedIssue, relatedHealth, action)
+      const outcome = createRunbookOutcome(runbook, selectedIssue, directHealthSignals, action)
       setLastOutcome(outcome)
       setRemediationQueue(current => [outcome, ...current].slice(0, 12))
     }
@@ -209,6 +226,33 @@ export default function TroubleshootingPage({ session }: TroubleshootingPageProp
                   </button>
                 ))}
               </div>
+
+              {impactAssessment && (
+                <section className="impact-scope-panel">
+                  <div className="panel-header">
+                    <div>
+                      <h2>Impact Scope</h2>
+                      <span>{impactAssessment.recommendedPath}</span>
+                    </div>
+                    <StatusPill label={impactAssessment.scope} tone={impactTone(impactAssessment.severity)} />
+                  </div>
+
+                  <div className="impact-scope-grid">
+                    <div><span>Affected Clients</span><strong>{impactAssessment.affectedClients}</strong></div>
+                    <div><span>Affected Venues</span><strong>{impactAssessment.affectedVenues}</strong></div>
+                    <div><span>Similar Open Issues</span><strong>{impactAssessment.similarOpenIssues}</strong></div>
+                    <div><span>Confidence</span><strong>{impactAssessment.confidence}</strong></div>
+                  </div>
+
+                  <div className="diagnosis-block universal-boundary">
+                    <Radar size={18} strokeWidth={1.8} />
+                    <div>
+                      <h3>{impactAssessment.primarySignal}</h3>
+                      <p>{impactAssessment.supportBoundary}</p>
+                    </div>
+                  </div>
+                </section>
+              )}
 
               <div className="runbook-meta-grid">
                 <div><span>Scope</span><strong>{selectedRunbook.scope}</strong></div>

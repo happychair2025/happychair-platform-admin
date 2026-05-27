@@ -43,6 +43,19 @@ export interface RunbookActionOutcome {
   auditActionKey: string
 }
 
+export interface ImpactAssessment {
+  scope: RunbookScope
+  confidence: RunbookConfidence
+  severity: 'notice' | 'warning' | 'critical'
+  affectedClients: number
+  affectedVenues: number
+  similarOpenIssues: number
+  primarySignal: string
+  recommendedPath: string
+  supportBoundary: string
+  escalationRecommended: boolean
+}
+
 export const supportRunbooks: SupportRunbook[] = [
   {
     id: 'runbook-module-configuration',
@@ -161,6 +174,78 @@ export const supportRunbooks: SupportRunbook[] = [
 export function getRunbooksForIssue(issueType?: SupportIssue['issueType']) {
   if (!issueType) return supportRunbooks
   return supportRunbooks.filter(runbook => runbook.matchesIssueTypes.includes(issueType))
+}
+
+export function createImpactAssessment(
+  issue: SupportIssue,
+  runbook: SupportRunbook,
+  relatedSignals: PlatformHealthSignal[],
+  allIssues: SupportIssue[],
+): ImpactAssessment {
+  const affectedClients = Math.max(1, ...relatedSignals.map(signal => signal.affectedClients))
+  const affectedVenues = Math.max(1, ...relatedSignals.map(signal => signal.affectedVenues))
+  const similarOpenIssues = allIssues.filter(item => item.issueType === issue.issueType && item.status !== 'Resolved').length
+  const primarySignal = relatedSignals.find(signal => signal.status === 'Failing')?.label
+    ?? relatedSignals.find(signal => signal.status === 'Warning')?.label
+    ?? issue.relatedSignal
+
+  if (runbook.category === 'Universal Code Issue') {
+    return {
+      scope: 'All Tenants',
+      confidence: 'Needs Engineering',
+      severity: 'critical',
+      affectedClients,
+      affectedVenues,
+      similarOpenIssues,
+      primarySignal,
+      recommendedPath: 'Create engineering incident packet before attempting any broad mitigation.',
+      supportBoundary: 'Support gathers evidence and mitigation context. Engineering fixes shared code.',
+      escalationRecommended: true,
+    }
+  }
+
+  if (affectedClients > 1 || similarOpenIssues > 1) {
+    return {
+      scope: 'Module-Wide',
+      confidence: 'Medium',
+      severity: 'warning',
+      affectedClients,
+      affectedVenues,
+      similarOpenIssues,
+      primarySignal,
+      recommendedPath: 'Confirm whether the signal repeats across clients before applying a client-scoped repair.',
+      supportBoundary: 'Use read-only diagnostics and scoped server actions. Escalate if the same failure repeats across tenants.',
+      escalationRecommended: true,
+    }
+  }
+
+  if (affectedVenues > 1) {
+    return {
+      scope: 'Client / Property',
+      confidence: 'Medium',
+      severity: 'warning',
+      affectedClients,
+      affectedVenues,
+      similarOpenIssues,
+      primarySignal,
+      recommendedPath: 'Use the selected runbook only against this client or property scope.',
+      supportBoundary: 'Support can apply allowlisted configuration or queue repair actions within the affected customer scope.',
+      escalationRecommended: false,
+    }
+  }
+
+  return {
+    scope: 'Single Venue',
+    confidence: 'High',
+    severity: 'notice',
+    affectedClients,
+    affectedVenues,
+    similarOpenIssues,
+    primarySignal,
+    recommendedPath: 'Use the selected support-safe runbook and keep all changes auditable.',
+    supportBoundary: 'Support can apply allowlisted venue-scoped actions. Do not change shared platform behavior.',
+    escalationRecommended: false,
+  }
 }
 
 export function createRunbookOutcome(
