@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { AlertTriangle, ArrowUpRight, CheckCircle2, ClipboardList, Code2, FileCheck2, FileSearch, RotateCw, ShieldAlert, Wrench } from 'lucide-react'
 import type { AdminSession } from '../../App'
 import ActivityTimeline from '../../components/admin/ActivityTimeline'
+import DataTable from '../../components/admin/DataTable'
 import PageHeader from '../../components/admin/PageHeader'
 import StatusPill from '../../components/admin/StatusPill'
 import { runAdminAction } from '../../lib/admin-actions/actionGateway'
@@ -26,12 +27,22 @@ function categoryTone(category: RunbookCategory): 'ok' | 'warn' | 'danger' {
   return 'ok'
 }
 
+function formatDateTime(value: string) {
+  return new Intl.DateTimeFormat('en-US', {
+    month: 'short',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+  }).format(new Date(value))
+}
+
 export default function TroubleshootingPage({ session }: TroubleshootingPageProps) {
   const { data } = usePlatformData()
   const { activityEvents, platformHealthSignals, supportIssues } = data
   const [selectedIssueId, setSelectedIssueId] = useState(supportIssues[0]?.id ?? '')
   const [selectedRunbookId, setSelectedRunbookId] = useState('')
   const [lastOutcome, setLastOutcome] = useState<RunbookActionOutcome | null>(null)
+  const [remediationQueue, setRemediationQueue] = useState<RunbookActionOutcome[]>([])
   const [notice, setNotice] = useState('')
   const canRun = hasPermission(session.role, 'troubleshooting.run')
   const selectedIssue = supportIssues.find(issue => issue.id === selectedIssueId) ?? supportIssues[0]
@@ -75,7 +86,9 @@ export default function TroubleshootingPage({ session }: TroubleshootingPageProp
       ? `${action === 'safe_fix' ? 'Safe fix recorded' : 'Incident packet recorded'} for ${runbook.title}.`
       : result.message)
     if (result.ok && selectedIssue) {
-      setLastOutcome(createRunbookOutcome(runbook, selectedIssue, relatedHealth, action))
+      const outcome = createRunbookOutcome(runbook, selectedIssue, relatedHealth, action)
+      setLastOutcome(outcome)
+      setRemediationQueue(current => [outcome, ...current].slice(0, 12))
     }
   }
 
@@ -275,6 +288,54 @@ export default function TroubleshootingPage({ session }: TroubleshootingPageProp
           )}
         </section> : <section className="detail-panel"><div className="empty-state compact">No troubleshooting issues are available yet.</div></section>}
       </div>
+
+      <DataTable
+        label="Remediation Queue"
+        rows={remediationQueue}
+        pageSize={5}
+        emptyTitle="No remediation packets have been recorded in this session."
+        columns={[
+          {
+            key: 'packet',
+            header: 'Packet',
+            sortable: true,
+            searchValue: row => `${row.title} ${row.runbookTitle} ${row.type}`,
+            render: row => (
+              <button className="table-link" onClick={() => setLastOutcome(row)}>
+                {row.type === 'incident_packet' ? 'Incident Packet' : 'Safe Fix Packet'}
+              </button>
+            ),
+          },
+          {
+            key: 'issue',
+            header: 'Issue',
+            sortable: true,
+            searchValue: row => `${row.issueType} ${row.venueName} ${row.organizationName}`,
+            render: row => <strong>{row.issueType} / {row.venueName}</strong>,
+          },
+          {
+            key: 'owner',
+            header: 'Owner',
+            sortable: true,
+            searchValue: row => row.owner,
+            render: row => row.owner,
+          },
+          {
+            key: 'status',
+            header: 'Status',
+            sortable: true,
+            searchValue: row => row.status,
+            render: row => <StatusPill label={row.status} tone={row.severity === 'warning' ? 'warn' : 'ok'} />,
+          },
+          {
+            key: 'created',
+            header: 'Created',
+            sortable: true,
+            searchValue: row => row.createdAt,
+            render: row => formatDateTime(row.createdAt),
+          },
+        ]}
+      />
 
       <div className="dashboard-grid">
         <section className="panel">

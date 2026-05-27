@@ -26,6 +26,11 @@ export interface RunbookActionOutcome {
   id: string
   type: RunbookActionType
   title: string
+  runbookTitle: string
+  organizationName: string
+  propertyName: string
+  venueName: string
+  issueType: SupportIssue['issueType']
   status: 'Recorded' | 'Ready For Server Action' | 'Engineering Review'
   severity: 'notice' | 'warning'
   owner: SupportRunbook['owner']
@@ -176,6 +181,11 @@ export function createRunbookOutcome(
     id: `${runbook.id}-${Date.now()}`,
     type: actionType,
     title: isIncident ? 'Engineering Incident Packet' : 'Support Safe Fix Packet',
+    runbookTitle: runbook.title,
+    organizationName: issue.organizationName,
+    propertyName: issue.propertyName,
+    venueName: issue.venueName,
+    issueType: issue.issueType,
     status: isIncident ? 'Engineering Review' : runbook.serverSideRequired ? 'Ready For Server Action' : 'Recorded',
     severity: isIncident || runbook.category === 'Universal Code Issue' ? 'warning' : 'notice',
     owner: isIncident ? 'Engineering' : runbook.owner,

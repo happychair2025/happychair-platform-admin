@@ -1249,6 +1249,7 @@ Build:
 - Health checks
 - Troubleshooting panel
 - Diagnose and remediate runbooks
+- Remediation packet queue
 - System status view
 - Support action logging
 - Issue severity states
@@ -1260,6 +1261,7 @@ Exit criteria:
 - Support can identify problems quickly.
 - Support can distinguish client configuration, data/queue repair, and universal code issues.
 - Troubleshooting actions are audit-logged.
+- Safe-fix and incident packets stay visible in a searchable support queue.
 - Universal code issues route to engineering incident packets instead of support-side mutation.
 - System health can be shown by client and venue.
 
