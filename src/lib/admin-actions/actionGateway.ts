@@ -28,11 +28,20 @@ export function runAdminAction(session: AdminSession, input: AdminActionInput): 
   if (!allowed) {
     const auditEvent = appendAuditEvent({
       actor: session.name,
+      actorEmail: session.email,
       actorRole,
       scope: input.scope,
       actionKey: input.blockedActionKey ?? 'admin_action.blocked.mock',
       actionLabel: `Blocked ${input.actionLabel}`,
       severity: 'critical',
+      permission: input.permission,
+      outcome: 'blocked',
+      metadata: {
+        ...input.metadata,
+        requiredPermission: input.permission,
+        blockedReason: 'role_permission_denied',
+        productionWritePath: 'server_action_required',
+      },
     })
 
     return {
@@ -44,16 +53,24 @@ export function runAdminAction(session: AdminSession, input: AdminActionInput): 
 
   const auditEvent = appendAuditEvent({
     actor: session.name,
+    actorEmail: session.email,
     actorRole,
     scope: input.scope,
     actionKey: input.actionKey,
     actionLabel: input.actionLabel,
     severity: input.severity ?? 'notice',
+    permission: input.permission,
+    outcome: 'allowed',
+    metadata: {
+      ...input.metadata,
+      requiredPermission: input.permission,
+      productionWritePath: 'server_action_required',
+    },
   })
 
   return {
     ok: true,
-    message: 'Action recorded in the local audit trail.',
+    message: 'Action recorded in the audit action ledger.',
     auditEvent,
   }
 }

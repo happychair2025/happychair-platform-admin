@@ -1,22 +1,44 @@
+import { useSyncExternalStore } from 'react'
+
 export type AuditSeverity = 'info' | 'notice' | 'warning' | 'critical'
+export type AuditOutcome = 'allowed' | 'blocked' | 'recorded'
+export type AuditPersistenceStatus = 'local_durable' | 'server_recorded' | 'server_pending'
+export type AuditPersistenceTarget = 'local_storage' | 'platform_admin.audit_logs'
 
 export interface AuditEvent {
   id: string
   actor: string
+  actorEmail?: string
   actorRole: string
   scope: string
   actionKey: string
   actionLabel: string
   severity: AuditSeverity
+  permission?: string
+  outcome?: AuditOutcome
+  metadata?: Record<string, unknown>
+  persistenceStatus?: AuditPersistenceStatus
+  persistenceTarget?: AuditPersistenceTarget
   createdAt: string
 }
 
 const storageKey = 'hc_platform_admin_audit_events'
+const listeners = new Set<() => void>()
+let cachedRawEvents = ''
+let cachedEvents: AuditEvent[] = []
 
 export function getLocalAuditEvents(): AuditEvent[] {
+  if (typeof localStorage === 'undefined') return []
+  const rawEvents = localStorage.getItem(storageKey) ?? '[]'
+  if (rawEvents === cachedRawEvents) return cachedEvents
+
   try {
-    return JSON.parse(localStorage.getItem(storageKey) ?? '[]') as AuditEvent[]
+    cachedRawEvents = rawEvents
+    cachedEvents = JSON.parse(rawEvents) as AuditEvent[]
+    return cachedEvents
   } catch {
+    cachedRawEvents = rawEvents
+    cachedEvents = []
     return []
   }
 }
@@ -25,10 +47,32 @@ export function appendAuditEvent(event: Omit<AuditEvent, 'id' | 'createdAt'>) {
   const nextEvent: AuditEvent = {
     ...event,
     id: crypto.randomUUID(),
+    outcome: event.outcome ?? 'recorded',
+    persistenceStatus: event.persistenceStatus ?? 'local_durable',
+    persistenceTarget: event.persistenceTarget ?? 'local_storage',
     createdAt: new Date().toISOString(),
   }
   const events = [nextEvent, ...getLocalAuditEvents()].slice(0, 40)
-  localStorage.setItem(storageKey, JSON.stringify(events))
+  cachedEvents = events
+  cachedRawEvents = JSON.stringify(events)
+  localStorage.setItem(storageKey, cachedRawEvents)
+  emitAuditChange()
   return nextEvent
 }
 
+export function subscribeToAuditEvents(listener: () => void) {
+  listeners.add(listener)
+  window.addEventListener('storage', listener)
+  return () => {
+    listeners.delete(listener)
+    window.removeEventListener('storage', listener)
+  }
+}
+
+export function useLocalAuditEvents() {
+  return useSyncExternalStore(subscribeToAuditEvents, getLocalAuditEvents, () => [])
+}
+
+function emitAuditChange() {
+  listeners.forEach(listener => listener())
+}

@@ -20,6 +20,7 @@ import type {
   UsageAnalyticsRow,
   VenueSummary,
 } from '../mock-data/mockPlatform'
+import type { AuditEvent } from '../audit/auditLog'
 import { readOnlyViewNames, type ReadOnlySupabaseAdapter } from '../supabase/readContracts'
 
 interface SupabaseReadOnlyConfig {
@@ -82,6 +83,9 @@ export function createSupabaseReadOnlyAdapter(config: SupabaseReadOnlyConfig): R
     },
     async listImpersonationSessions() {
       return fetchView<ImpersonationSessionRecord>('impersonationSessions')
+    },
+    async listAuditEvents() {
+      return fetchView<AuditEvent>('auditEvents')
     },
     async listAgentDefinitions() {
       return fetchView<AgentDefinition>('agentDefinitions')

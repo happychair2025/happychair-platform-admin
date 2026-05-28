@@ -44,6 +44,9 @@ export const mockReadAdapter: ReadOnlySupabaseAdapter = {
   async listImpersonationSessions() {
     return mockReadModel.impersonationSessions
   },
+  async listAuditEvents() {
+    return mockReadModel.auditEvents
+  },
   async listAgentDefinitions() {
     return mockReadModel.agentDefinitions
   },

@@ -667,6 +667,19 @@ td {
   font-size: 14px;
 }
 
+td code {
+  color: var(--cyan);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.cell-subtext {
+  display: block;
+  margin-top: 3px;
+  color: var(--t2);
+  font-size: 12px;
+}
+
 .table-sort {
   display: inline-flex;
   align-items: center;

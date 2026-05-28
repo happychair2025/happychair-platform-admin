@@ -650,12 +650,24 @@ Audit record should include:
 
 - Actor type
 - Actor ID
+- Actor label and role
 - Scope IDs
 - Action key
 - Human-readable action label
 - Severity
+- Required permission
+- Outcome: allowed, blocked, or recorded
+- Persistence source/status
 - Metadata JSON
 - Timestamp
+
+Action ledger rule:
+
+- UI actions may be captured in a local durable ledger during prototype phases.
+- Production actions must write through a server-side action utility or RPC.
+- The Audit Logs screen should combine live action ledger entries with the read-only `platform_admin_audit_logs_read` view.
+- Blocked permission attempts must be logged with severity `critical`.
+- No customer-state mutation should happen before permission, audit, and rollback metadata are available.
 
 ## 17. Troubleshooting And Health Checks
 
@@ -1058,6 +1070,7 @@ Security requirements:
 - Audit logs should not be mutable through normal app code.
 - Impersonation sessions must be time-limited and auditable.
 - Finance, billing, export, feature flag, and destructive operations require elevated permissions.
+- The browser must not directly mutate production customer state; it should request server-side actions that permission-check and write audit records.
 
 Cross-tenant access rule:
 
@@ -1206,6 +1219,8 @@ Build:
 - Reusable status pills
 - Reusable detail page header
 - Audit log utility
+- Live audit action ledger
+- Read-only audit log view contract
 - Module registry structure
 - Mock data layer clearly labeled as placeholder
 
@@ -1215,6 +1230,7 @@ Exit criteria:
 - Navigation is role-aware.
 - Executive dashboard has real layout and placeholder-safe metrics.
 - Audit utility can record meaningful local/admin events.
+- Audit Logs can display live local action events alongside read-only server audit events.
 - Module registry can render modules without hardcoded UI behavior.
 
 ### Phase 2: Client And Venue Management

@@ -20,6 +20,7 @@ import type {
   UsageAnalyticsRow,
   VenueSummary,
 } from '../mock-data/mockPlatform'
+import type { AuditEvent } from '../audit/auditLog'
 
 export const readOnlyViewNames = {
   organizations: 'platform_admin_organizations_read',
@@ -35,6 +36,7 @@ export const readOnlyViewNames = {
   platformHealthSignals: 'platform_admin_health_signals_read',
   impersonationTargets: 'platform_admin_impersonation_targets_read',
   impersonationSessions: 'platform_admin_impersonation_sessions_read',
+  auditEvents: 'platform_admin_audit_logs_read',
   agentDefinitions: 'platform_admin_agent_definitions_read',
   agentEvents: 'platform_admin_agent_events_read',
   internalAdminUsers: 'platform_admin_internal_admin_users_read',
@@ -58,6 +60,7 @@ export interface PlatformAdminReadModel {
   platformHealthSignals: PlatformHealthSignal[]
   impersonationTargets: ImpersonationTarget[]
   impersonationSessions: ImpersonationSessionRecord[]
+  auditEvents: AuditEvent[]
   agentDefinitions: AgentDefinition[]
   agentEvents: AgentEventRecord[]
   internalAdminUsers: InternalAdminUser[]
@@ -81,6 +84,7 @@ export interface ReadOnlySupabaseAdapter {
   listPlatformHealthSignals(): Promise<PlatformHealthSignal[]>
   listImpersonationTargets(): Promise<ImpersonationTarget[]>
   listImpersonationSessions(): Promise<ImpersonationSessionRecord[]>
+  listAuditEvents(): Promise<AuditEvent[]>
   listAgentDefinitions(): Promise<AgentDefinition[]>
   listAgentEvents(): Promise<AgentEventRecord[]>
   listInternalAdminUsers(): Promise<InternalAdminUser[]>

@@ -58,6 +58,7 @@ New public read views:
 - `platform_admin_health_signals_read`
 - `platform_admin_impersonation_targets_read`
 - `platform_admin_impersonation_sessions_read`
+- `platform_admin_audit_logs_read`
 - `platform_admin_agent_definitions_read`
 - `platform_admin_agent_events_read`
 - `platform_admin_internal_admin_users_read`

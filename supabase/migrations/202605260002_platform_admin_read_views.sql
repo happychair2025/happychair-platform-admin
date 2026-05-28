@@ -321,6 +321,28 @@ left join platform_admin.organizations o on o.id = s.organization_id
 left join platform_admin.properties p on p.id = s.property_id
 left join platform_admin.venues v on v.id = s.venue_id;
 
+create or replace view public.platform_admin_audit_logs_read
+with (security_invoker = true)
+as
+select
+  al.id,
+  coalesce(al.actor_label, al.actor_type) as actor,
+  al.actor_role,
+  coalesce(v.name, p.name, o.name, al.metadata ->> 'scope', 'Platform') as scope,
+  al.action_key,
+  al.action_label,
+  al.severity,
+  al.metadata,
+  coalesce(al.metadata ->> 'permission', al.metadata ->> 'requiredPermission') as permission,
+  coalesce(al.metadata ->> 'outcome', 'recorded') as outcome,
+  'server_recorded' as persistence_status,
+  'platform_admin.audit_logs' as persistence_target,
+  al.created_at
+from platform_admin.audit_logs al
+left join platform_admin.organizations o on o.id = al.organization_id
+left join platform_admin.properties p on p.id = al.property_id
+left join platform_admin.venues v on v.id = al.venue_id;
+
 create or replace view public.platform_admin_agent_definitions_read
 with (security_invoker = true)
 as
