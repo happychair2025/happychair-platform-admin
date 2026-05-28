@@ -249,6 +249,7 @@ export interface ImpersonationSessionRecord {
 
 export type AgentKey =
   | 'marketing'
+  | 'website_content'
   | 'social_media'
   | 'seo_geo'
   | 'sem'
@@ -258,9 +259,19 @@ export type AgentKey =
   | 'finance'
   | 'client_success'
 
+export type AgentCategory =
+  | 'Growth'
+  | 'Sales'
+  | 'Client Success'
+  | 'Support'
+  | 'Finance'
+  | 'Product / Platform'
+  | 'Risk / Trust'
+
 export interface AgentDefinition {
   key: AgentKey
   name: string
+  category: AgentCategory
   owner: 'Marketing' | 'Sales' | 'Client Success' | 'Support' | 'Finance' | 'Owner'
   status: 'Monitoring Ready' | 'Draft Only' | 'Planned'
   purpose: string
@@ -1346,6 +1357,7 @@ export const agentDefinitions: AgentDefinition[] = [
   {
     key: 'marketing',
     name: 'Marketing Agent',
+    category: 'Growth',
     owner: 'Marketing',
     status: 'Monitoring Ready',
     purpose: 'Monitors signup sources, conversion trends, channel performance, message fit, and campaign opportunities.',
@@ -1354,8 +1366,20 @@ export const agentDefinitions: AgentDefinition[] = [
     blockedActions: ['Send campaigns', 'Change pricing', 'Mutate signup records', 'Change attribution source'],
   },
   {
+    key: 'website_content',
+    name: 'Website Management + Content Agent',
+    category: 'Growth',
+    owner: 'Marketing',
+    status: 'Monitoring Ready',
+    purpose: 'Monitors public website surfaces, landing page readiness, content accuracy, support paths, conversion copy, and pilot promise language.',
+    monitors: ['Website surfaces', 'Landing page readiness', 'Content accuracy', 'Support / help path', 'Pilot promise language', 'Conversion copy gaps'],
+    allowedActions: ['Draft page updates', 'Flag outdated claims', 'Recommend landing page changes', 'Prepare content QA notes'],
+    blockedActions: ['Publish pages', 'Change DNS or redirects', 'Edit pricing live', 'Change customer promises without owner review'],
+  },
+  {
     key: 'social_media',
     name: 'Social Media Agent',
+    category: 'Growth',
     owner: 'Marketing',
     status: 'Draft Only',
     purpose: 'Monitors social content opportunities, testimonials, launch moments, customer proof, and audience engagement signals.',
@@ -1366,6 +1390,7 @@ export const agentDefinitions: AgentDefinition[] = [
   {
     key: 'seo_geo',
     name: 'SEO / GEO Agent',
+    category: 'Growth',
     owner: 'Marketing',
     status: 'Monitoring Ready',
     purpose: 'Monitors organic search, answer-engine visibility, keyword themes, content gaps, and property-type demand.',
@@ -1376,6 +1401,7 @@ export const agentDefinitions: AgentDefinition[] = [
   {
     key: 'sem',
     name: 'SEM Agent',
+    category: 'Growth',
     owner: 'Marketing',
     status: 'Draft Only',
     purpose: 'Monitors paid search opportunities, demo-intent keywords, acquisition cost signals, and campaign readiness.',
@@ -1386,6 +1412,7 @@ export const agentDefinitions: AgentDefinition[] = [
   {
     key: 'sales_sdr',
     name: 'Sales SDR Agent',
+    category: 'Sales',
     owner: 'Sales',
     status: 'Draft Only',
     purpose: 'Monitors qualified signups, demo requests, trial readiness, expansion signals, and outreach timing.',
@@ -1396,6 +1423,7 @@ export const agentDefinitions: AgentDefinition[] = [
   {
     key: 'email',
     name: 'Email Agent',
+    category: 'Growth',
     owner: 'Client Success',
     status: 'Draft Only',
     purpose: 'Watches lifecycle triggers and prepares internal or customer-facing messaging for review.',
@@ -1406,6 +1434,7 @@ export const agentDefinitions: AgentDefinition[] = [
   {
     key: 'support',
     name: 'Support Agent',
+    category: 'Support',
     owner: 'Support',
     status: 'Monitoring Ready',
     purpose: 'Reviews errors, support history, venue health, logs, and audit trails for likely next action.',
@@ -1416,6 +1445,7 @@ export const agentDefinitions: AgentDefinition[] = [
   {
     key: 'finance',
     name: 'Finance Agent',
+    category: 'Finance',
     owner: 'Finance',
     status: 'Planned',
     purpose: 'Monitors MRR, ARR, failed payments, churn, discounts, refunds, and forecasts.',
@@ -1426,6 +1456,7 @@ export const agentDefinitions: AgentDefinition[] = [
   {
     key: 'client_success',
     name: 'Client Success Agent',
+    category: 'Client Success',
     owner: 'Client Success',
     status: 'Monitoring Ready',
     purpose: 'Finds onboarding gaps, adoption risks, usage decline, expansion signals, renewal risks, and testimonial candidates.',
@@ -1501,6 +1532,17 @@ export const agentEvents: AgentEventRecord[] = [
   },
   {
     id: 'agent-event-6',
+    agentKey: 'website_content',
+    agentName: 'Website Management + Content Agent',
+    eventType: 'Recommendation Created',
+    status: 'Needs Review',
+    inputSummary: 'Support path exists in the operator sidebar, but the website content map has not reflected the help journey yet.',
+    outputSummary: 'Add website content QA item for Help Path language, owner promise boundaries, and conversion page consistency.',
+    auditRequired: true,
+    createdAt: new Date(Date.now() - 1000 * 60 * 228).toISOString(),
+  },
+  {
+    id: 'agent-event-7',
     agentKey: 'social_media',
     agentName: 'Social Media Agent',
     organizationName: 'Happy Bistro Group',
@@ -1513,7 +1555,7 @@ export const agentEvents: AgentEventRecord[] = [
     createdAt: new Date(Date.now() - 1000 * 60 * 246).toISOString(),
   },
   {
-    id: 'agent-event-7',
+    id: 'agent-event-8',
     agentKey: 'seo_geo',
     agentName: 'SEO / GEO Agent',
     eventType: 'Risk Flagged',
@@ -1524,7 +1566,7 @@ export const agentEvents: AgentEventRecord[] = [
     createdAt: new Date(Date.now() - 1000 * 60 * 288).toISOString(),
   },
   {
-    id: 'agent-event-8',
+    id: 'agent-event-9',
     agentKey: 'sem',
     agentName: 'SEM Agent',
     eventType: 'Summary Drafted',
@@ -1535,7 +1577,7 @@ export const agentEvents: AgentEventRecord[] = [
     createdAt: new Date(Date.now() - 1000 * 60 * 334).toISOString(),
   },
   {
-    id: 'agent-event-9',
+    id: 'agent-event-10',
     agentKey: 'sales_sdr',
     agentName: 'Sales SDR Agent',
     organizationName: 'Marina Table Group',

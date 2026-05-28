@@ -1101,7 +1101,31 @@ td {
 
 .agent-card-grid {
   display: grid;
+  gap: 16px;
+}
+
+.agent-category-section {
+  display: grid;
   gap: 10px;
+}
+
+.agent-category-section + .agent-category-section {
+  padding-top: 14px;
+  border-top: 1px solid var(--b);
+}
+
+.agent-category-header,
+.agent-detail-pills {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.agent-category-header h3 {
+  margin: 3px 0 0;
+  font-size: 13px;
+  color: var(--t1);
 }
 
 .agent-card {

@@ -293,6 +293,7 @@ create table if not exists platform_admin.health_checks (
 create table if not exists platform_admin.agent_definitions (
   key text primary key,
   name text not null,
+  category text not null default 'Growth',
   owner text not null,
   status text not null default 'planned',
   purpose text,

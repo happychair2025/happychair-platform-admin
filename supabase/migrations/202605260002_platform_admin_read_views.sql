@@ -327,6 +327,7 @@ as
 select
   key,
   name,
+  category,
   owner,
   status,
   purpose,

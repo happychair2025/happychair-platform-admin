@@ -3,6 +3,7 @@ import {
   CheckCircle2,
   CircleDollarSign,
   ClipboardCheck,
+  FileText,
   HeartHandshake,
   LifeBuoy,
   Mail,
@@ -20,7 +21,7 @@ import MetricCard from '../../components/admin/MetricCard'
 import PageHeader from '../../components/admin/PageHeader'
 import StatusPill from '../../components/admin/StatusPill'
 import { runAdminAction } from '../../lib/admin-actions/actionGateway'
-import type { AgentDefinition } from '../../lib/mock-data/mockPlatform'
+import type { AgentCategory, AgentDefinition } from '../../lib/mock-data/mockPlatform'
 import { usePlatformData } from '../../lib/platform-data/PlatformDataContext'
 
 interface AgentsPageProps {
@@ -29,6 +30,7 @@ interface AgentsPageProps {
 
 const agentIcons = {
   marketing: Megaphone,
+  website_content: FileText,
   social_media: Share2,
   seo_geo: SearchCheck,
   sem: MousePointerClick,
@@ -38,6 +40,16 @@ const agentIcons = {
   finance: CircleDollarSign,
   client_success: HeartHandshake,
 } as const
+
+const agentCategoryOrder: AgentCategory[] = [
+  'Growth',
+  'Sales',
+  'Client Success',
+  'Support',
+  'Finance',
+  'Product / Platform',
+  'Risk / Trust',
+]
 
 function statusTone(status: string): 'ok' | 'warn' | 'info' | 'neutral' {
   if (status === 'Monitoring Ready' || status === 'Reviewed') return 'ok'
@@ -53,7 +65,16 @@ export default function AgentsPage({ session }: AgentsPageProps) {
   const [notice, setNotice] = useState('')
   const selectedAgent = useMemo(
     () => agentDefinitions.find(agent => agent.key === selectedKey) ?? agentDefinitions[0],
-    [selectedKey],
+    [agentDefinitions, selectedKey],
+  )
+  const groupedAgents = useMemo(
+    () => agentCategoryOrder
+      .map(category => ({
+        category,
+        agents: agentDefinitions.filter(agent => agent.category === category),
+      }))
+      .filter(group => group.agents.length > 0),
+    [agentDefinitions],
   )
   const selectedEvents = selectedAgent ? agentEvents.filter(event => event.agentKey === selectedAgent.key) : []
   const monitoringReady = agentDefinitions.filter(agent => agent.status === 'Monitoring Ready').length
@@ -81,7 +102,7 @@ export default function AgentsPage({ session }: AgentsPageProps) {
       {notice && <p className="warning-copy">{notice}</p>}
 
       <div className="metrics-grid compact">
-        <MetricCard label="Agent Workflows" value={String(agentDefinitions.length)} delta="GTM, support, finance, success" tone="neutral" icon={<Bot size={16} />} />
+        <MetricCard label="Agent Workflows" value={String(agentDefinitions.length)} delta={`${groupedAgents.length} grouped categories`} tone="neutral" icon={<Bot size={16} />} />
         <MetricCard label="Monitoring Ready" value={String(monitoringReady)} delta="Read-only signal watchers" tone="ok" icon={<ShieldCheck size={16} />} />
         <MetricCard label="Needs Review" value={String(needsReview)} delta="Human approval queue" tone={needsReview ? 'warn' : 'ok'} icon={<ClipboardCheck size={16} />} />
         <MetricCard label="Audit Required" value={String(auditRequired)} delta="Events with future audit hooks" tone="warn" icon={<CheckCircle2 size={16} />} />
@@ -106,25 +127,40 @@ export default function AgentsPage({ session }: AgentsPageProps) {
           </div>
 
           <div className="agent-card-grid">
-            {agentDefinitions.map(agent => {
-              const Icon = agentIcons[agent.key]
-              return (
-                <button
-                  key={agent.key}
-                  className={`agent-card${agent.key === selectedAgent?.key ? ' selected' : ''}`}
-                  onClick={() => setSelectedKey(agent.key)}
-                >
-                  <span className="module-icon" aria-hidden="true">
-                    <Icon size={18} strokeWidth={1.8} />
-                  </span>
-                  <span>
-                    <strong>{agent.name}</strong>
-                    <small>{agent.purpose}</small>
-                  </span>
-                  <StatusPill label={agent.status} tone={statusTone(agent.status)} />
-                </button>
-              )
-            })}
+            {groupedAgents.map(group => (
+              <div className="agent-category-section" key={group.category}>
+                <div className="agent-category-header">
+                  <div>
+                    <p className="eyebrow">{group.category}</p>
+                    <h3>{group.agents.length} sub-agent{group.agents.length === 1 ? '' : 's'}</h3>
+                  </div>
+                  <StatusPill label={`${group.agents.filter(agent => agent.status === 'Monitoring Ready').length} ready`} tone="info" />
+                </div>
+
+                {group.agents.map(agent => {
+                  const Icon = agentIcons[agent.key]
+                  return (
+                    <button
+                      key={agent.key}
+                      className={`agent-card${agent.key === selectedAgent?.key ? ' selected' : ''}`}
+                      onClick={() => setSelectedKey(agent.key)}
+                    >
+                      <span className="module-icon" aria-hidden="true">
+                        <Icon size={18} strokeWidth={1.8} />
+                      </span>
+                      <span>
+                        <strong>{agent.name}</strong>
+                        <small>{agent.purpose}</small>
+                      </span>
+                      <StatusPill label={agent.status} tone={statusTone(agent.status)} />
+                    </button>
+                  )
+                })}
+              </div>
+            ))}
+            {!groupedAgents.length && (
+              <div className="empty-state compact">No agent contracts are available yet.</div>
+            )}
           </div>
         </section>
 
@@ -134,7 +170,10 @@ export default function AgentsPage({ session }: AgentsPageProps) {
               <p className="eyebrow">Agent Contract</p>
               <h2>{selectedAgent.name}</h2>
             </div>
-            <StatusPill label={selectedAgent.owner} tone="info" />
+            <div className="agent-detail-pills">
+              <StatusPill label={selectedAgent.category} tone="neutral" />
+              <StatusPill label={selectedAgent.owner} tone="info" />
+            </div>
           </div>
 
           <p className="muted-copy">{selectedAgent.purpose}</p>

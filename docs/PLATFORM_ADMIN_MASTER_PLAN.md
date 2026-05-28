@@ -168,15 +168,28 @@ Navigation structure:
 - Impersonation
 - Audit Logs
 - AI Agents
-  - Marketing Agent
-  - Social Media Agent
-  - SEO / GEO Agent
-  - SEM Agent
-  - Sales SDR Agent
-  - Email Agent
-  - Support Agent
-  - Finance Agent
-  - Client Success Agent
+  - Growth
+    - Marketing Agent
+    - Website Management + Content Agent
+    - Social Media Agent
+    - SEO / GEO Agent
+    - SEM Agent
+    - Email Agent
+  - Sales
+    - Sales SDR Agent
+  - Client Success
+    - Client Success Agent
+  - Support
+    - Support Agent
+  - Finance
+    - Finance Agent
+  - Product / Platform
+    - Engineering Triage Agent
+    - QA / Regression Agent
+    - Data Quality Agent
+  - Risk / Trust
+    - Audit Review Agent
+    - Security / Permission Review Agent
 - Reports
 - Billing
 - Feature Flags
@@ -703,17 +716,15 @@ Do not build full AI automation in the MVP unless a formal agent framework alrea
 
 Build the admin structure and event hooks for future agents.
 
-Agent sections:
+Agent categories and sub-agents:
 
-- Marketing Agent
-- Social Media Agent
-- SEO / GEO Agent
-- SEM Agent
-- Sales SDR Agent
-- Email Agent
-- Support Agent
-- Finance Agent
-- Client Success Agent
+- Growth: Marketing Agent, Website Management + Content Agent, Social Media Agent, SEO / GEO Agent, SEM Agent, Email Agent
+- Sales: Sales SDR Agent
+- Client Success: Client Success Agent, future Onboarding / Implementation Agent, future Expansion / Upsell Agent
+- Support: Support Agent, future Troubleshooting Agent, future Knowledge Base Agent
+- Finance: Finance Agent, future Billing Risk Agent, future Forecasting Agent
+- Product / Platform: future Engineering Triage Agent, future QA / Regression Agent, future Data Quality Agent, future Release Notes / Changelog Agent
+- Risk / Trust: future Audit Review Agent, future Security / Permission Review Agent, future Compliance / Policy Agent
 
 Marketing Agent future scope:
 
@@ -722,6 +733,16 @@ Marketing Agent future scope:
 - Monitor channel performance
 - Identify campaign opportunities
 - Recommend landing page or lifecycle messaging ideas
+
+Website Management + Content Agent future scope:
+
+- Monitor public website surfaces
+- Monitor landing page readiness
+- Monitor content accuracy and stale claims
+- Monitor support/help path language
+- Monitor pilot promise language across conversion pages
+- Draft page update recommendations for human approval
+- Never publish pages, alter DNS, change redirects, or change public promises without owner review
 
 Social Media Agent future scope:
 
@@ -788,6 +809,7 @@ Rules:
 
 - Every future AI action writes to audit log.
 - Every agent event writes to `agent_events`.
+- Every agent definition belongs to a category so the registry can grow into sub-agent teams without rework.
 - Agent recommendations should remain reviewable before destructive action.
 - Agent output should never silently mutate client state without explicit permissions and audit records.
 - Claude agents may recommend, summarize, draft, classify, and flag.
@@ -995,6 +1017,20 @@ Use existing venues/outlets table if present. If adding or extending:
 - `message`
 - `metadata` json
 - `checked_at`
+
+### `agent_definitions`
+
+- `key`
+- `name`
+- `category`
+- `owner`
+- `status`
+- `purpose`
+- `monitors`
+- `allowed_actions`
+- `blocked_actions`
+- `created_at`
+- `updated_at`
 
 ### `agent_events`
 
@@ -1296,7 +1332,9 @@ Build:
 
 - AI Agents section
 - Agent event model
+- Agent category registry
 - Marketing Agent placeholder
+- Website Management + Content Agent placeholder
 - Social Media Agent placeholder
 - SEO / GEO Agent placeholder
 - SEM Agent placeholder
@@ -1312,6 +1350,7 @@ Exit criteria:
 
 - Future agents have a place to write events.
 - Agent recommendations can be displayed without mutating state.
+- Agent contracts are grouped by category and can grow into sub-agent teams.
 - Every future agent action has an audit path.
 
 ## 24. Reports And Exports
