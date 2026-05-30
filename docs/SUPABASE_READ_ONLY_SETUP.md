@@ -36,6 +36,7 @@ The current read layer expects these views:
 - `platform_admin_revenue_metrics_read`
 - `platform_admin_billing_risks_read`
 - `platform_admin_support_issues_read`
+- `platform_admin_remediation_packets_read`
 - `platform_admin_health_signals_read`
 - `platform_admin_impersonation_targets_read`
 - `platform_admin_impersonation_sessions_read`

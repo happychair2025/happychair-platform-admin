@@ -274,6 +274,33 @@ select
   checked_at
 from platform_admin.health_checks;
 
+create or replace view public.platform_admin_remediation_packets_read
+with (security_invoker = true)
+as
+select
+  id,
+  packet_type as type,
+  title,
+  runbook_title,
+  organization_name,
+  property_name,
+  venue_name,
+  issue_type,
+  status,
+  severity,
+  owner,
+  scope,
+  created_at,
+  updated_at,
+  primary_message,
+  evidence,
+  next_steps,
+  blocked_actions,
+  audit_action_key,
+  persistence_status,
+  persistence_target
+from platform_admin.remediation_packets;
+
 create or replace view public.platform_admin_impersonation_targets_read
 with (security_invoker = true)
 as

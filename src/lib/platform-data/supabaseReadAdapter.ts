@@ -21,6 +21,7 @@ import type {
   VenueSummary,
 } from '../mock-data/mockPlatform'
 import type { AuditEvent } from '../audit/auditLog'
+import type { RunbookActionOutcome } from '../support/runbooks'
 import { readOnlyViewNames, type ReadOnlySupabaseAdapter } from '../supabase/readContracts'
 
 interface SupabaseReadOnlyConfig {
@@ -74,6 +75,9 @@ export function createSupabaseReadOnlyAdapter(config: SupabaseReadOnlyConfig): R
     },
     async listSupportIssues() {
       return fetchView<SupportIssue>('supportIssues')
+    },
+    async listRemediationPackets() {
+      return fetchView<RunbookActionOutcome>('remediationPackets')
     },
     async listPlatformHealthSignals() {
       return fetchView<PlatformHealthSignal>('platformHealthSignals')

@@ -34,6 +34,7 @@ export const mockReadModel: PlatformAdminReadModel = {
   revenueMetrics,
   billingRisks,
   supportIssues,
+  remediationPackets: [],
   platformHealthSignals,
   impersonationTargets,
   impersonationSessions,

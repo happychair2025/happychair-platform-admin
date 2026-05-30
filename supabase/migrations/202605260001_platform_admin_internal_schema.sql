@@ -290,6 +290,34 @@ create table if not exists platform_admin.health_checks (
   checked_at timestamptz not null default now()
 );
 
+create table if not exists platform_admin.remediation_packets (
+  id text primary key,
+  packet_type text not null check (packet_type in ('safe_fix', 'incident_packet')),
+  title text not null,
+  runbook_title text not null,
+  organization_id uuid references platform_admin.organizations(id) on delete set null,
+  property_id uuid references platform_admin.properties(id) on delete set null,
+  venue_id uuid references platform_admin.venues(id) on delete set null,
+  organization_name text not null,
+  property_name text,
+  venue_name text not null,
+  issue_type text not null,
+  status text not null,
+  severity text not null default 'notice' check (severity in ('notice', 'warning')),
+  owner text not null,
+  scope text not null,
+  primary_message text,
+  evidence text[] not null default array[]::text[],
+  next_steps text[] not null default array[]::text[],
+  blocked_actions text[] not null default array[]::text[],
+  audit_action_key text not null,
+  persistence_status text not null default 'server_recorded',
+  persistence_target text not null default 'platform_admin.remediation_packets',
+  metadata jsonb not null default '{}'::jsonb,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
 create table if not exists platform_admin.agent_definitions (
   key text primary key,
   name text not null,
@@ -336,6 +364,7 @@ create index if not exists platform_admin_usage_events_scope_idx on platform_adm
 create index if not exists platform_admin_financial_metrics_org_period_idx on platform_admin.financial_metrics (organization_id, period_start, period_end);
 create index if not exists platform_admin_audit_logs_scope_idx on platform_admin.audit_logs (organization_id, property_id, venue_id, created_at desc);
 create index if not exists platform_admin_health_checks_scope_idx on platform_admin.health_checks (organization_id, property_id, venue_id, checked_at desc);
+create index if not exists platform_admin_remediation_packets_status_idx on platform_admin.remediation_packets (status, created_at desc);
 create index if not exists platform_admin_agent_events_agent_idx on platform_admin.agent_events (agent_key, created_at desc);
 
 drop trigger if exists set_updated_at_internal_admin_users on platform_admin.internal_admin_users;
@@ -388,6 +417,11 @@ create trigger set_updated_at_support_issues
 before update on platform_admin.support_issues
 for each row execute function platform_admin.set_updated_at();
 
+drop trigger if exists set_updated_at_remediation_packets on platform_admin.remediation_packets;
+create trigger set_updated_at_remediation_packets
+before update on platform_admin.remediation_packets
+for each row execute function platform_admin.set_updated_at();
+
 drop trigger if exists set_updated_at_agent_definitions on platform_admin.agent_definitions;
 create trigger set_updated_at_agent_definitions
 before update on platform_admin.agent_definitions
@@ -417,6 +451,7 @@ alter table platform_admin.support_notes enable row level security;
 alter table platform_admin.activity_events enable row level security;
 alter table platform_admin.support_issues enable row level security;
 alter table platform_admin.health_checks enable row level security;
+alter table platform_admin.remediation_packets enable row level security;
 alter table platform_admin.agent_definitions enable row level security;
 alter table platform_admin.agent_events enable row level security;
 alter table platform_admin.feature_flags enable row level security;

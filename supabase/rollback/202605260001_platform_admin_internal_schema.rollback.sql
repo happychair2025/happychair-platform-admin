@@ -12,6 +12,7 @@ drop view if exists public.platform_admin_feature_flags_read;
 drop view if exists public.platform_admin_internal_admin_users_read;
 drop view if exists public.platform_admin_impersonation_sessions_read;
 drop view if exists public.platform_admin_impersonation_targets_read;
+drop view if exists public.platform_admin_remediation_packets_read;
 drop view if exists public.platform_admin_health_signals_read;
 drop view if exists public.platform_admin_support_issues_read;
 drop view if exists public.platform_admin_billing_risks_read;

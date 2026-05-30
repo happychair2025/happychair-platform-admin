@@ -39,6 +39,7 @@ New Platform Admin-owned tables:
 - `platform_admin.activity_events`
 - `platform_admin.support_issues`
 - `platform_admin.health_checks`
+- `platform_admin.remediation_packets`
 - `platform_admin.agent_definitions`
 - `platform_admin.agent_events`
 - `platform_admin.feature_flags`
@@ -55,6 +56,7 @@ New public read views:
 - `platform_admin_revenue_metrics_read`
 - `platform_admin_billing_risks_read`
 - `platform_admin_support_issues_read`
+- `platform_admin_remediation_packets_read`
 - `platform_admin_health_signals_read`
 - `platform_admin_impersonation_targets_read`
 - `platform_admin_impersonation_sessions_read`

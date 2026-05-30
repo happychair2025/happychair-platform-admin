@@ -1030,6 +1030,34 @@ Use existing venues/outlets table if present. If adding or extending:
 - `metadata` json
 - `checked_at`
 
+### `remediation_packets`
+
+- `id`
+- `type`
+- `title`
+- `runbook_title`
+- `organization_id` nullable
+- `property_id` nullable
+- `venue_id` nullable
+- `organization_name`
+- `property_name`
+- `venue_name`
+- `issue_type`
+- `status`
+- `severity`
+- `owner`
+- `scope`
+- `primary_message`
+- `evidence`
+- `next_steps`
+- `blocked_actions`
+- `audit_action_key`
+- `persistence_status`
+- `persistence_target`
+- `metadata` json
+- `created_at`
+- `updated_at`
+
 ### `agent_definitions`
 
 - `key`
@@ -1306,6 +1334,8 @@ Build:
 - Impact scope detection
 - Remediation packet queue
 - Remediation packet lifecycle controls
+- Durable remediation packet ledger
+- Read-only remediation packet view contract
 - System status view
 - Support action logging
 - Issue severity states
@@ -1319,6 +1349,7 @@ Exit criteria:
 - Support can see whether an issue is venue-scoped, client-scoped, module-wide, or universal before acting.
 - Troubleshooting actions are audit-logged.
 - Safe-fix and incident packets stay visible in a searchable support queue.
+- Safe-fix and incident packets persist across page navigation and reload.
 - Support can move packets through queued, handed-off, and resolved states.
 - Universal code issues route to engineering incident packets instead of support-side mutation.
 - System health can be shown by client and venue.

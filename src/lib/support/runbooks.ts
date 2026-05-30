@@ -5,6 +5,8 @@ export type RunbookScope = 'Single Venue' | 'Client / Property' | 'Module-Wide' 
 export type RunbookConfidence = 'High' | 'Medium' | 'Needs Engineering'
 export type RunbookActionType = 'safe_fix' | 'incident_packet'
 export type RunbookOutcomeStatus = 'Recorded' | 'Ready For Server Action' | 'Engineering Review' | 'Queued For Server Action' | 'Handed Off' | 'Resolved'
+export type RemediationPersistenceStatus = 'local_durable' | 'server_recorded'
+export type RemediationPersistenceTarget = 'local_storage' | 'platform_admin.remediation_packets'
 
 export interface SupportRunbook {
   id: string
@@ -42,6 +44,9 @@ export interface RunbookActionOutcome {
   nextSteps: string[]
   blockedActions: string[]
   auditActionKey: string
+  updatedAt?: string
+  persistenceStatus?: RemediationPersistenceStatus
+  persistenceTarget?: RemediationPersistenceTarget
 }
 
 export interface ImpactAssessment {

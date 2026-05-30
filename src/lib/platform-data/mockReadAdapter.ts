@@ -35,6 +35,9 @@ export const mockReadAdapter: ReadOnlySupabaseAdapter = {
   async listSupportIssues() {
     return mockReadModel.supportIssues
   },
+  async listRemediationPackets() {
+    return mockReadModel.remediationPackets
+  },
   async listPlatformHealthSignals() {
     return mockReadModel.platformHealthSignals
   },

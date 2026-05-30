@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { AlertTriangle, ArrowUpRight, CheckCircle2, ClipboardList, Code2, FileCheck2, FileSearch, Radar, RotateCw, ShieldAlert, Wrench } from 'lucide-react'
 import type { AdminSession } from '../../App'
 import ActivityTimeline from '../../components/admin/ActivityTimeline'
@@ -8,6 +8,7 @@ import StatusPill from '../../components/admin/StatusPill'
 import { runAdminAction } from '../../lib/admin-actions/actionGateway'
 import type { PlatformHealthSignal, SupportIssue } from '../../lib/mock-data/mockPlatform'
 import { createImpactAssessment, createRunbookOutcome, getRunbooksForIssue, type ImpactAssessment, type RunbookActionOutcome, type RunbookCategory, type RunbookOutcomeStatus, type SupportRunbook } from '../../lib/support/runbooks'
+import { saveRemediationPacket, updateRemediationPacketStatus, useRemediationPackets } from '../../lib/support/remediationLedger'
 import { usePlatformData } from '../../lib/platform-data/PlatformDataContext'
 import { hasPermission } from '../../lib/permissions/permissions'
 
@@ -50,6 +51,11 @@ function formatDateTime(value: string) {
   }).format(new Date(value))
 }
 
+function remediationPersistenceLabel(outcome: RunbookActionOutcome) {
+  if (outcome.persistenceStatus === 'server_recorded') return 'Server Recorded'
+  return 'Local Ledger'
+}
+
 function getDirectHealthSignals(issueType: SupportIssue['issueType'], signals: PlatformHealthSignal[]) {
   return signals.filter(signal => {
     if (issueType === 'Notification Delivery') return signal.checkKey === 'notification_delivery'
@@ -63,11 +69,11 @@ function getDirectHealthSignals(issueType: SupportIssue['issueType'], signals: P
 
 export default function TroubleshootingPage({ session }: TroubleshootingPageProps) {
   const { data } = usePlatformData()
-  const { activityEvents, platformHealthSignals, supportIssues } = data
+  const { activityEvents, platformHealthSignals, remediationPackets, supportIssues } = data
+  const localRemediationPackets = useRemediationPackets()
   const [selectedIssueId, setSelectedIssueId] = useState(supportIssues[0]?.id ?? '')
   const [selectedRunbookId, setSelectedRunbookId] = useState('')
   const [lastOutcome, setLastOutcome] = useState<RunbookActionOutcome | null>(null)
-  const [remediationQueue, setRemediationQueue] = useState<RunbookActionOutcome[]>([])
   const [notice, setNotice] = useState('')
   const canRun = hasPermission(session.role, 'troubleshooting.run')
   const selectedIssue = supportIssues.find(issue => issue.id === selectedIssueId) ?? supportIssues[0]
@@ -80,6 +86,10 @@ export default function TroubleshootingPage({ session }: TroubleshootingPageProp
   const impactAssessment = selectedIssue && selectedRunbook
     ? createImpactAssessment(selectedIssue, selectedRunbook, directHealthSignals, supportIssues)
     : null
+  const remediationQueue = useMemo(() => {
+    return [...localRemediationPackets, ...remediationPackets.filter(packet => !localRemediationPackets.some(localPacket => localPacket.id === packet.id))]
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+  }, [localRemediationPackets, remediationPackets])
 
   const auditAction = (action: string) => {
     const result = runAdminAction(session, {
@@ -110,9 +120,8 @@ export default function TroubleshootingPage({ session }: TroubleshootingPageProp
       ? `${action === 'safe_fix' ? 'Safe fix recorded' : 'Incident packet recorded'} for ${runbook.title}.`
       : result.message)
     if (result.ok && selectedIssue) {
-      const outcome = createRunbookOutcome(runbook, selectedIssue, directHealthSignals, action)
+      const outcome = saveRemediationPacket(createRunbookOutcome(runbook, selectedIssue, directHealthSignals, action))
       setLastOutcome(outcome)
-      setRemediationQueue(current => [outcome, ...current].slice(0, 12))
     }
   }
 
@@ -130,9 +139,8 @@ export default function TroubleshootingPage({ session }: TroubleshootingPageProp
       return
     }
 
-    const nextOutcome = { ...outcome, status: nextStatus }
+    const nextOutcome = updateRemediationPacketStatus(outcome, nextStatus)
     setLastOutcome(nextOutcome)
-    setRemediationQueue(current => current.map(item => item.id === outcome.id ? nextOutcome : item))
     setNotice(`${outcome.title} moved to ${nextStatus}.`)
   }
 
@@ -337,6 +345,7 @@ export default function TroubleshootingPage({ session }: TroubleshootingPageProp
                     <div><span>Owner</span><strong>{lastOutcome.owner}</strong></div>
                     <div><span>Scope</span><strong>{lastOutcome.scope}</strong></div>
                     <div><span>Audit Action</span><strong>{lastOutcome.auditActionKey}</strong></div>
+                    <div><span>Persistence</span><strong>{remediationPersistenceLabel(lastOutcome)}</strong></div>
                   </div>
 
                   <div className="runbook-columns">
@@ -385,7 +394,7 @@ export default function TroubleshootingPage({ session }: TroubleshootingPageProp
         label="Remediation Queue"
         rows={remediationQueue}
         pageSize={5}
-        emptyTitle="No remediation packets have been recorded in this session."
+        emptyTitle="No remediation packets have been recorded yet."
         columns={[
           {
             key: 'packet',
@@ -418,6 +427,13 @@ export default function TroubleshootingPage({ session }: TroubleshootingPageProp
             sortable: true,
             searchValue: row => row.status,
             render: row => <StatusPill label={row.status} tone={outcomeTone(row.status, row.severity)} />,
+          },
+          {
+            key: 'persistence',
+            header: 'Persistence',
+            sortable: true,
+            searchValue: row => row.persistenceStatus ?? 'server_recorded',
+            render: row => <StatusPill label={remediationPersistenceLabel(row)} tone={row.persistenceStatus === 'local_durable' ? 'info' : 'ok'} />,
           },
           {
             key: 'created',
