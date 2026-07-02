@@ -21,6 +21,7 @@ import {
   usageAnalytics,
   venues,
 } from '../mock-data/mockPlatform'
+import { mockAdminActionRequests } from '../admin-actions/mockActionRequests'
 import type { PlatformAdminReadModel } from '../supabase/readContracts'
 
 export const mockReadModel: PlatformAdminReadModel = {
@@ -35,6 +36,7 @@ export const mockReadModel: PlatformAdminReadModel = {
   billingRisks,
   supportIssues,
   remediationPackets: [],
+  adminActionRequests: mockAdminActionRequests,
   platformHealthSignals,
   impersonationTargets,
   impersonationSessions,

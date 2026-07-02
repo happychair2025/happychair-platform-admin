@@ -21,6 +21,7 @@ import type {
   VenueSummary,
 } from '../mock-data/mockPlatform'
 import type { AuditEvent } from '../audit/auditLog'
+import type { AdminActionRequest } from '../admin-actions/actionRequests'
 import type { RunbookActionOutcome } from '../support/runbooks'
 
 export const readOnlyViewNames = {
@@ -35,6 +36,7 @@ export const readOnlyViewNames = {
   billingRisks: 'platform_admin_billing_risks_read',
   supportIssues: 'platform_admin_support_issues_read',
   remediationPackets: 'platform_admin_remediation_packets_read',
+  adminActionRequests: 'platform_admin_admin_action_requests_read',
   platformHealthSignals: 'platform_admin_health_signals_read',
   impersonationTargets: 'platform_admin_impersonation_targets_read',
   impersonationSessions: 'platform_admin_impersonation_sessions_read',
@@ -60,6 +62,7 @@ export interface PlatformAdminReadModel {
   billingRisks: BillingRiskRecord[]
   supportIssues: SupportIssue[]
   remediationPackets: RunbookActionOutcome[]
+  adminActionRequests: AdminActionRequest[]
   platformHealthSignals: PlatformHealthSignal[]
   impersonationTargets: ImpersonationTarget[]
   impersonationSessions: ImpersonationSessionRecord[]
@@ -85,6 +88,7 @@ export interface ReadOnlySupabaseAdapter {
   listBillingRisks(): Promise<BillingRiskRecord[]>
   listSupportIssues(): Promise<SupportIssue[]>
   listRemediationPackets(): Promise<RunbookActionOutcome[]>
+  listAdminActionRequests(): Promise<AdminActionRequest[]>
   listPlatformHealthSignals(): Promise<PlatformHealthSignal[]>
   listImpersonationTargets(): Promise<ImpersonationTarget[]>
   listImpersonationSessions(): Promise<ImpersonationSessionRecord[]>

@@ -5,7 +5,8 @@ import DataTable from '../../components/admin/DataTable'
 import MetricCard from '../../components/admin/MetricCard'
 import PageHeader from '../../components/admin/PageHeader'
 import StatusPill from '../../components/admin/StatusPill'
-import { runAdminAction } from '../../lib/admin-actions/actionGateway'
+import { queueAdminActionRequest } from '../../lib/admin-actions/actionGateway'
+import { createAdminActionScope } from '../../lib/admin-actions/actionRequests'
 import type { FeatureFlagRecord } from '../../lib/mock-data/mockPlatform'
 import { usePlatformData } from '../../lib/platform-data/PlatformDataContext'
 import { hasPermission } from '../../lib/permissions/permissions'
@@ -42,20 +43,29 @@ export default function FeatureFlagsPage({ session }: FeatureFlagsPageProps) {
 
   const toggleFlag = (flag: FeatureFlagRecord) => {
     const nextValue = !flagState[flag.key]
-    const result = runAdminAction(session, {
+    const result = queueAdminActionRequest(session, {
+      actionType: 'feature_flag_change',
+      title: `${nextValue ? 'Enable' : 'Disable'} ${flag.name}`,
       permission: 'feature_flags.manage',
-      scope: flag.name,
-      actionKey: 'feature_flag.changed.mock',
-      actionLabel: `${nextValue ? 'Enabled' : 'Disabled'} ${flag.name} after internal review`,
+      scope: createAdminActionScope({ label: flag.key }),
+      reason: `${flag.name} was requested from the feature flag rollout controls. Production flag changes require the server handler and rollout audit notes.`,
+      rollbackNotes: `Restore ${flag.key} to ${flag.enabled ? 'enabled' : 'disabled'} and return rollout to ${flag.rollout}% if validation fails.`,
       severity: flag.blastRadius === 'High' ? 'critical' : flag.requiresAudit ? 'warning' : 'notice',
+      metadata: {
+        flagKey: flag.key,
+        flagName: flag.name,
+        requestedEnabledState: nextValue,
+        environment: flag.environment,
+        blastRadius: flag.blastRadius,
+        rollout: flag.rollout,
+      },
     })
     if (!result.ok) {
       setNotice(result.message)
       return
     }
 
-    setFlagState(current => ({ ...current, [flag.key]: nextValue }))
-    setNotice(`${flag.name} mock change recorded in Audit Logs.`)
+    setNotice(`${flag.name} server action request queued.`)
   }
 
   const reviewedFlags = useMemo(() => flags.filter(flag => flag.requiresAudit || flag.blastRadius !== 'Low'), [flags])
@@ -70,7 +80,7 @@ export default function FeatureFlagsPage({ session }: FeatureFlagsPageProps) {
 
       <div className="metrics-grid compact">
         <MetricCard label="Total Flags" value={String(flags.length)} delta="Internal contracts" tone="neutral" icon={<Flag size={16} />} />
-        <MetricCard label="Enabled" value={String(enabledCount)} delta="Mock local state" tone="ok" icon={<SlidersHorizontal size={16} />} />
+        <MetricCard label="Enabled" value={String(enabledCount)} delta="Read-only registry state" tone="ok" icon={<SlidersHorizontal size={16} />} />
         <MetricCard label="High Risk" value={String(highRiskCount)} delta="Needs owner review" tone={highRiskCount ? 'danger' : 'ok'} icon={<AlertTriangle size={16} />} />
         <MetricCard label="Audit Required" value={String(auditRequiredCount)} delta="Tracked before mutation" tone="warn" icon={<ListChecks size={16} />} />
       </div>
@@ -152,7 +162,7 @@ export default function FeatureFlagsPage({ session }: FeatureFlagsPageProps) {
             </div>
 
             <button className="primary-action" disabled={!canManage} onClick={() => toggleFlag(selectedFlag)}>
-              {flagState[selectedFlag.key] ? 'Disable Mock Flag' : 'Enable Mock Flag'}
+              {flagState[selectedFlag.key] ? 'Queue Disable Request' : 'Queue Enable Request'}
             </button>
             {notice && <p className="warning-copy">{notice}</p>}
           </aside>

@@ -154,6 +154,8 @@ All permission checks should be centralized so UI gating and server/data actions
 Navigation structure:
 
 - Executive Dashboard
+- Attention Queue
+- Command Cadence
 - Registrations
 - Revenue
 - Clients
@@ -1058,6 +1060,27 @@ Use existing venues/outlets table if present. If adding or extending:
 - `created_at`
 - `updated_at`
 
+### `admin_action_requests`
+
+- `id`
+- `action_type`
+- `title`
+- `requested_by` json
+- `permission_required`
+- `scope` json
+- `status`
+- `reason`
+- `audit_event_id`
+- `rollback_notes`
+- `server_handler` json
+- `status_reason`
+- `transition_audit_event_id`
+- `metadata` json
+- `persistence_status`
+- `persistence_target`
+- `created_at`
+- `updated_at`
+
 ### `agent_definitions`
 
 - `key`
@@ -1377,9 +1400,11 @@ Exit criteria:
 
 Build:
 
-- AI Agents section
+- AI Agent Foundation section
 - Agent event model
 - Agent category registry
+- Local read-only rules runtime
+- Durable local agent run ledger
 - Marketing Agent placeholder
 - Website Management + Content Agent placeholder
 - Social Media Agent placeholder
@@ -1396,6 +1421,7 @@ Build:
 Exit criteria:
 
 - Future agents have a place to write events.
+- Local agents can generate reviewable events from read-only platform signals.
 - Agent recommendations can be displayed without mutating state.
 - Agent contracts are grouped by category and can grow into sub-agent teams.
 - Every future agent action has an audit path.

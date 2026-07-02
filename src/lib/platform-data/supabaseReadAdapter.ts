@@ -21,6 +21,7 @@ import type {
   VenueSummary,
 } from '../mock-data/mockPlatform'
 import type { AuditEvent } from '../audit/auditLog'
+import type { AdminActionRequest } from '../admin-actions/actionRequests'
 import type { RunbookActionOutcome } from '../support/runbooks'
 import { readOnlyViewNames, type ReadOnlySupabaseAdapter } from '../supabase/readContracts'
 
@@ -45,7 +46,7 @@ export function createSupabaseReadOnlyAdapter(config: SupabaseReadOnlyConfig): R
       if (!scope?.organizationId && !scope?.propertyId) return rows
       return rows.filter(row => {
         const organizationMatch = scope.organizationId ? row.organizationId === scope.organizationId : true
-        const propertyMatch = scope.propertyId ? row.propertyName === scope.propertyId : true
+        const propertyMatch = scope.propertyId ? row.propertyId === scope.propertyId : true
         return organizationMatch && propertyMatch
       })
     },
@@ -78,6 +79,9 @@ export function createSupabaseReadOnlyAdapter(config: SupabaseReadOnlyConfig): R
     },
     async listRemediationPackets() {
       return fetchView<RunbookActionOutcome>('remediationPackets')
+    },
+    async listAdminActionRequests() {
+      return fetchView<AdminActionRequest>('adminActionRequests')
     },
     async listPlatformHealthSignals() {
       return fetchView<PlatformHealthSignal>('platformHealthSignals')

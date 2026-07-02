@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { AlertTriangle, Clock, Radio, ShieldCheck, TabletSmartphone, UserRoundSearch, Users } from 'lucide-react'
 import type { AdminSession } from '../../App'
 import ActivityTimeline from '../../components/admin/ActivityTimeline'
@@ -7,19 +7,21 @@ import InternalNotes from '../../components/admin/InternalNotes'
 import MetricCard from '../../components/admin/MetricCard'
 import PageHeader from '../../components/admin/PageHeader'
 import StatusPill from '../../components/admin/StatusPill'
-import { runAdminAction } from '../../lib/admin-actions/actionGateway'
+import { queueAdminActionRequest } from '../../lib/admin-actions/actionGateway'
+import { createAdminActionScope } from '../../lib/admin-actions/actionRequests'
 import { healthChecks } from '../../lib/mock-data/mockPlatform'
 import { usePlatformData } from '../../lib/platform-data/PlatformDataContext'
 import { hasPermission } from '../../lib/permissions/permissions'
 
 interface VenueSupportPageProps {
   session: AdminSession
+  initialVenueId?: string
 }
 
-export default function VenueSupportPage({ session }: VenueSupportPageProps) {
+export default function VenueSupportPage({ session, initialVenueId }: VenueSupportPageProps) {
   const { data } = usePlatformData()
   const { activityEvents, moduleActivations, organizations, supportNotes, venues } = data
-  const [selectedVenueId, setSelectedVenueId] = useState(venues[0]?.id ?? '')
+  const [selectedVenueId, setSelectedVenueId] = useState(initialVenueId ?? venues[0]?.id ?? '')
   const [reason, setReason] = useState('')
   const [message, setMessage] = useState('')
   const selectedVenue = venues.find(venue => venue.id === selectedVenueId) ?? venues[0]
@@ -29,32 +31,64 @@ export default function VenueSupportPage({ session }: VenueSupportPageProps) {
   const canImpersonate = hasPermission(session.role, 'impersonation.start')
   const canRunChecks = hasPermission(session.role, 'troubleshooting.run')
 
+  useEffect(() => {
+    if (initialVenueId && venues.some(venue => venue.id === initialVenueId)) {
+      setSelectedVenueId(initialVenueId)
+    }
+  }, [initialVenueId, venues])
+
   const startImpersonation = () => {
     if (!reason.trim()) {
       setMessage('Reason is required before starting a support session.')
       return
     }
-    const result = runAdminAction(session, {
+    const result = queueAdminActionRequest(session, {
+      actionType: 'impersonation_start',
+      title: `Request scoped view-as setup for ${selectedVenue?.name ?? 'selected venue'}`,
       permission: 'impersonation.start',
-      scope: selectedVenue?.name ?? 'Venue',
-      actionKey: 'impersonation.requested.mock',
-      actionLabel: `Requested view-as support session: ${reason.trim()}`,
+      scope: createAdminActionScope({
+        organizationId: selectedVenue?.organizationId,
+        organizationName: organization?.name,
+        propertyName: selectedVenue?.propertyName,
+        venueId: selectedVenue?.id,
+        venueName: selectedVenue?.name,
+      }),
+      reason: reason.trim(),
+      rollbackNotes: 'Do not create or expose a view-as session if user targeting, expiry, or permission checks fail.',
       severity: 'warning',
+      metadata: {
+        venueId: selectedVenue?.id,
+        venueName: selectedVenue?.name,
+        targetSelectionRequired: true,
+      },
     })
-    setMessage(result.ok ? 'Support session request captured in the local audit trail.' : result.message)
+    setMessage(result.ok ? 'View-as setup request added to Admin Action Requests.' : result.message)
     if (!result.ok) return
     setReason('')
   }
 
   const runHealthChecks = () => {
-    const result = runAdminAction(session, {
+    const result = queueAdminActionRequest(session, {
+      actionType: 'support_troubleshooting_action',
+      title: `Run support health checks for ${selectedVenue?.name ?? 'selected venue'}`,
       permission: 'troubleshooting.run',
-      scope: selectedVenue?.name ?? 'Venue',
-      actionKey: 'health.check.run.mock',
-      actionLabel: 'Ran mock venue health checks',
+      scope: createAdminActionScope({
+        organizationId: selectedVenue?.organizationId,
+        organizationName: organization?.name,
+        propertyName: selectedVenue?.propertyName,
+        venueId: selectedVenue?.id,
+        venueName: selectedVenue?.name,
+      }),
+      reason: 'Support requested a fresh venue health check run from the workbench.',
+      rollbackNotes: 'Health checks should not mutate tenant state. If handler execution fails, preserve the existing support view and write a failed activity note.',
       severity: 'notice',
+      metadata: {
+        venueId: selectedVenue?.id,
+        venueName: selectedVenue?.name,
+        checkKeys: healthChecks.map(check => check.id),
+      },
     })
-    setMessage(result.ok ? 'Mock health check run captured in the local audit trail.' : result.message)
+    setMessage(result.ok ? 'Health check run added to Admin Action Requests.' : result.message)
   }
 
   if (!selectedVenue) {
@@ -62,7 +96,7 @@ export default function VenueSupportPage({ session }: VenueSupportPageProps) {
       <div className="page-stack">
         <PageHeader
           eyebrow="Support Workbench"
-          title="Venue Support Detail"
+          title="Venue Support Workbench"
           description="Operational status, live support signals, health checks, troubleshooting, notes, and impersonation foundation."
         />
         <div className="empty-state compact">No venues are available yet.</div>
@@ -74,7 +108,7 @@ export default function VenueSupportPage({ session }: VenueSupportPageProps) {
     <div className="page-stack">
       <PageHeader
         eyebrow="Support Workbench"
-        title="Venue Support Detail"
+        title="Venue Support Workbench"
         description="Operational status, live support signals, health checks, troubleshooting, notes, and impersonation foundation."
       />
 
@@ -118,7 +152,7 @@ export default function VenueSupportPage({ session }: VenueSupportPageProps) {
           <div className="panel-header">
             <div>
               <h2>Troubleshooting Panel</h2>
-              <span>Mock health checks</span>
+              <span>Server-requested health checks</span>
             </div>
             <button className="ghost-action" disabled={!canRunChecks} onClick={runHealthChecks}>
               <ShieldCheck size={16} strokeWidth={1.8} />

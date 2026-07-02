@@ -5,7 +5,8 @@ import ActivityTimeline from '../../components/admin/ActivityTimeline'
 import DataTable from '../../components/admin/DataTable'
 import PageHeader from '../../components/admin/PageHeader'
 import StatusPill from '../../components/admin/StatusPill'
-import { runAdminAction } from '../../lib/admin-actions/actionGateway'
+import { queueAdminActionRequest, runAdminAction } from '../../lib/admin-actions/actionGateway'
+import { createAdminActionScope } from '../../lib/admin-actions/actionRequests'
 import type { PlatformHealthSignal, SupportIssue } from '../../lib/mock-data/mockPlatform'
 import { createImpactAssessment, createRunbookOutcome, getRunbooksForIssue, type ImpactAssessment, type RunbookActionOutcome, type RunbookCategory, type RunbookOutcomeStatus, type SupportRunbook } from '../../lib/support/runbooks'
 import { saveRemediationPacket, updateRemediationPacketStatus, useRemediationPackets } from '../../lib/support/remediationLedger'
@@ -92,14 +93,26 @@ export default function TroubleshootingPage({ session }: TroubleshootingPageProp
   }, [localRemediationPackets, remediationPackets])
 
   const auditAction = (action: string) => {
-    const result = runAdminAction(session, {
+    const result = queueAdminActionRequest(session, {
+      actionType: 'support_troubleshooting_action',
+      title: `${action.replace(/_/g, ' ')} support issue for ${selectedIssue?.venueName ?? 'selected issue'}`,
       permission: 'troubleshooting.run',
-      scope: selectedIssue?.venueName ?? 'Troubleshooting',
-      actionKey: `troubleshooting.${action}.mock`,
-      actionLabel: `${action} troubleshooting action for ${selectedIssue?.venueName ?? 'selected issue'}`,
+      scope: createAdminActionScope({
+        organizationName: selectedIssue?.organizationName,
+        propertyName: selectedIssue?.propertyName,
+        venueName: selectedIssue?.venueName,
+        label: selectedIssue?.venueName ?? 'Troubleshooting',
+      }),
+      reason: `${action.replace(/_/g, ' ')} was requested from the troubleshooting workflow. Production support issue updates must be handled server-side.`,
+      rollbackNotes: 'Leave the support issue unchanged and append a failed activity note if the server handler cannot write the lifecycle event.',
       severity: action === 'escalated' ? 'warning' : 'notice',
+      metadata: {
+        supportIssueId: selectedIssue?.id,
+        supportIssueType: selectedIssue?.issueType,
+        requestedLifecycleAction: action,
+      },
     })
-    setNotice(result.ok ? `Troubleshooting action recorded for ${selectedIssue?.venueName ?? 'selected issue'}.` : result.message)
+    setNotice(result.ok ? `Troubleshooting server action request queued for ${selectedIssue?.venueName ?? 'selected issue'}.` : result.message)
   }
 
   const recordRunbookAction = (runbook: SupportRunbook, action: 'safe_fix' | 'incident_packet') => {
@@ -126,13 +139,35 @@ export default function TroubleshootingPage({ session }: TroubleshootingPageProp
   }
 
   const updateOutcomeStatus = (outcome: RunbookActionOutcome, nextStatus: RunbookOutcomeStatus) => {
-    const result = runAdminAction(session, {
-      permission: 'troubleshooting.run',
-      scope: outcome.venueName,
-      actionKey: `runbook.lifecycle.${nextStatus.toLowerCase().replace(/\s+/g, '_')}.mock`,
-      actionLabel: `${outcome.title} moved to ${nextStatus} for ${outcome.venueName}`,
-      severity: nextStatus === 'Resolved' ? 'notice' : 'warning',
-    })
+    const result = nextStatus === 'Queued For Server Action'
+      ? queueAdminActionRequest(session, {
+        actionType: 'remediation_server_action',
+        title: `${outcome.runbookTitle} for ${outcome.venueName}`,
+        permission: 'troubleshooting.run',
+        scope: createAdminActionScope({
+          organizationName: outcome.organizationName,
+          propertyName: outcome.propertyName,
+          venueName: outcome.venueName,
+        }),
+        reason: `${outcome.title} is ready for a scoped server-side remediation handler.`,
+        rollbackNotes: outcome.blockedActions.length
+          ? `Do not perform: ${outcome.blockedActions.join('; ')}. Restore the previous scoped state if remediation validation fails.`
+          : 'Restore the previous scoped state if remediation validation fails.',
+        severity: 'warning',
+        metadata: {
+          remediationPacketId: outcome.id,
+          runbookTitle: outcome.runbookTitle,
+          issueType: outcome.issueType,
+          nextSteps: outcome.nextSteps,
+        },
+      })
+      : runAdminAction(session, {
+        permission: 'troubleshooting.run',
+        scope: outcome.venueName,
+        actionKey: `runbook.lifecycle.${nextStatus.toLowerCase().replace(/\s+/g, '_')}.mock`,
+        actionLabel: `${outcome.title} moved to ${nextStatus} for ${outcome.venueName}`,
+        severity: nextStatus === 'Resolved' ? 'notice' : 'warning',
+      })
 
     if (!result.ok) {
       setNotice(result.message)
@@ -141,7 +176,9 @@ export default function TroubleshootingPage({ session }: TroubleshootingPageProp
 
     const nextOutcome = updateRemediationPacketStatus(outcome, nextStatus)
     setLastOutcome(nextOutcome)
-    setNotice(`${outcome.title} moved to ${nextStatus}.`)
+    setNotice(nextStatus === 'Queued For Server Action'
+      ? `${outcome.title} moved to ${nextStatus} and added to Admin Action Requests.`
+      : `${outcome.title} moved to ${nextStatus}.`)
   }
 
   return (

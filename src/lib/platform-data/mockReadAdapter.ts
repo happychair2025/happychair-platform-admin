@@ -1,4 +1,4 @@
-import type { ActivityEvent, ModuleActivationSnapshot, PropertySummary, SupportNote, VenueSummary } from '../mock-data/mockPlatform'
+import type { ActivityEvent, ModuleActivationSnapshot, SupportNote, VenueSummary } from '../mock-data/mockPlatform'
 import type { ReadOnlySupabaseAdapter } from '../supabase/readContracts'
 import { mockReadModel } from './mockReadModel'
 
@@ -37,6 +37,9 @@ export const mockReadAdapter: ReadOnlySupabaseAdapter = {
   },
   async listRemediationPackets() {
     return mockReadModel.remediationPackets
+  },
+  async listAdminActionRequests() {
+    return mockReadModel.adminActionRequests
   },
   async listPlatformHealthSignals() {
     return mockReadModel.platformHealthSignals
@@ -79,7 +82,7 @@ function filterVenues(venues: VenueSummary[], scope?: { organizationId?: string;
   if (!scope?.organizationId && !scope?.propertyId) return venues
   return venues.filter(venue => {
     const organizationMatch = scope.organizationId ? venue.organizationId === scope.organizationId : true
-    const propertyMatch = scope.propertyId ? venue.propertyName === propertyNameById(scope.propertyId) : true
+    const propertyMatch = scope.propertyId ? venue.propertyId === scope.propertyId : true
     return organizationMatch && propertyMatch
   })
 }
@@ -91,8 +94,4 @@ function filterModuleActivations(activations: ModuleActivationSnapshot[], scope?
     if (scope.organizationId && activation.scopeType === 'organization') return activation.scopeId === scope.organizationId
     return false
   })
-}
-
-function propertyNameById(propertyId: string) {
-  return (mockReadModel.properties.find((property: PropertySummary) => property.id === propertyId))?.name
 }

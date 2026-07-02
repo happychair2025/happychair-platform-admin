@@ -1,16 +1,19 @@
-import { AlertTriangle, CheckCircle2, Clock, LifeBuoy, Radio, UserCheck } from 'lucide-react'
+import { AlertTriangle, CheckCircle2, Clock, LifeBuoy, Radio, Store, UserCheck } from 'lucide-react'
 import { useState } from 'react'
 import type { AdminSession } from '../../App'
 import DataTable from '../../components/admin/DataTable'
 import MetricCard from '../../components/admin/MetricCard'
 import PageHeader from '../../components/admin/PageHeader'
 import StatusPill from '../../components/admin/StatusPill'
-import { runAdminAction } from '../../lib/admin-actions/actionGateway'
+import { queueAdminActionRequest } from '../../lib/admin-actions/actionGateway'
+import { createAdminActionScope } from '../../lib/admin-actions/actionRequests'
+import type { SupportIssue } from '../../lib/mock-data/mockPlatform'
 import { usePlatformData } from '../../lib/platform-data/PlatformDataContext'
 import { hasPermission } from '../../lib/permissions/permissions'
 
 interface SupportCenterPageProps {
   session: AdminSession
+  onOpenVenueSupport?: (venueId: string) => void
 }
 
 function severityTone(severity: string) {
@@ -20,7 +23,7 @@ function severityTone(severity: string) {
   return 'ok'
 }
 
-export default function SupportCenterPage({ session }: SupportCenterPageProps) {
+export default function SupportCenterPage({ session, onOpenVenueSupport }: SupportCenterPageProps) {
   const { data } = usePlatformData()
   const [notice, setNotice] = useState('')
   const { organizations, supportIssues, venues } = data
@@ -31,15 +34,36 @@ export default function SupportCenterPage({ session }: SupportCenterPageProps) {
   const failedNotifications = venues.filter(venue => venue.notificationHealth === 'Failing')
   const atRiskClients = organizations.filter(org => org.accountStatus === 'At Risk')
 
-  const auditSupportAction = (action: string, scope: string) => {
-    const result = runAdminAction(session, {
+  const openVenueSupport = (venueName: string) => {
+    const venue = venues.find(row => row.name === venueName)
+    if (!venue) {
+      setNotice(`No venue detail row is loaded for ${venueName}.`)
+      return
+    }
+    onOpenVenueSupport?.(venue.id)
+  }
+
+  const queueSupportAction = (action: string, issue: SupportIssue) => {
+    const result = queueAdminActionRequest(session, {
+      actionType: 'support_troubleshooting_action',
+      title: `${action.replace(/_/g, ' ')} for ${issue.venueName}`,
       permission: 'support.manage',
-      scope,
-      actionKey: `support.${action}.mock`,
-      actionLabel: `${action} for ${scope}`,
+      scope: createAdminActionScope({
+        organizationName: issue.organizationName,
+        propertyName: issue.propertyName,
+        venueName: issue.venueName,
+      }),
+      reason: `${action.replace(/_/g, ' ')} was requested from Support Center. Production support lifecycle changes must run through the server-side handler.`,
+      rollbackNotes: 'Leave the support issue unchanged and append a failed activity note if the server handler cannot write the lifecycle event.',
       severity: 'notice',
+      metadata: {
+        supportIssueId: issue.id,
+        supportIssueType: issue.issueType,
+        previousStatus: issue.status,
+        requestedLifecycleAction: action,
+      },
     })
-    setNotice(result.ok ? `Support action for ${scope} recorded in Audit Logs.` : result.message)
+    setNotice(result.ok ? `Support action for ${issue.venueName} queued.` : result.message)
   }
 
   return (
@@ -76,15 +100,19 @@ export default function SupportCenterPage({ session }: SupportCenterPageProps) {
                 <p>{issue.issueType} / {issue.relatedSignal}</p>
                 <span>{issue.recommendedAction}</span>
                 <div className="support-actions">
-                  <button className="ghost-action" disabled={!canManage} onClick={() => auditSupportAction('assigned_owner', issue.venueName)}>
+                  <button className="ghost-action" onClick={() => openVenueSupport(issue.venueName)}>
+                    <Store size={15} strokeWidth={1.8} />
+                    Workbench
+                  </button>
+                  <button className="ghost-action" disabled={!canManage} onClick={() => queueSupportAction('assigned_owner', issue)}>
                     <UserCheck size={15} strokeWidth={1.8} />
                     Assign Owner
                   </button>
-                  <button className="ghost-action" disabled={!canManage} onClick={() => auditSupportAction('marked_investigating', issue.venueName)}>
+                  <button className="ghost-action" disabled={!canManage} onClick={() => queueSupportAction('marked_investigating', issue)}>
                     <LifeBuoy size={15} strokeWidth={1.8} />
                     Investigating
                   </button>
-                  <button className="ghost-action" disabled={!canManage} onClick={() => auditSupportAction('marked_resolved', issue.venueName)}>
+                  <button className="ghost-action" disabled={!canManage} onClick={() => queueSupportAction('marked_resolved', issue)}>
                     <CheckCircle2 size={15} strokeWidth={1.8} />
                     Resolve
                   </button>
@@ -130,7 +158,7 @@ export default function SupportCenterPage({ session }: SupportCenterPageProps) {
             header: 'Venue',
             sortable: true,
             searchValue: row => row.venueName,
-            render: row => <strong>{row.venueName}</strong>,
+            render: row => <button className="table-link" onClick={() => openVenueSupport(row.venueName)}>{row.venueName}</button>,
           },
           {
             key: 'issue',

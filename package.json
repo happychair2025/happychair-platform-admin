@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "verify:read-contracts": "node scripts/verify-platform-read-contracts.mjs"
   },
   "dependencies": {
     "lucide-react": "^0.468.0",
@@ -21,4 +22,3 @@
     "vite": "^6.0.0"
   }
 }
-

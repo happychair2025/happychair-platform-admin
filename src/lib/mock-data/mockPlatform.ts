@@ -27,6 +27,7 @@ export interface OrganizationSummary {
 export interface VenueSummary {
   id: string
   organizationId: string
+  propertyId: string
   propertyName: string
   name: string
   venueType: string
@@ -509,6 +510,7 @@ export const venues: VenueSummary[] = [
   {
     id: 'venue-happy-bistro',
     organizationId: 'org-happy-bistro',
+    propertyId: 'property-cape-coral',
     propertyName: 'Cape Coral Property',
     name: 'Happy Bistro',
     venueType: 'Restaurant',
@@ -528,6 +530,7 @@ export const venues: VenueSummary[] = [
   {
     id: 'venue-copper-main',
     organizationId: 'org-copper-club',
+    propertyId: 'property-copper-main',
     propertyName: 'Copper Club Main',
     name: 'Copper Club Dining',
     venueType: 'Private Club',
@@ -1608,6 +1611,42 @@ export const internalAdminUsers: InternalAdminUser[] = [
     status: 'Active',
     lastLoginAt: new Date(Date.now() - 1000 * 60 * 82).toISOString(),
     createdAt: '2026-05-06T12:00:00.000Z',
+  },
+  {
+    id: 'admin-platform-admin',
+    name: 'Platform Admin',
+    email: 'admin@happychair.internal',
+    role: 'admin',
+    status: 'Active',
+    lastLoginAt: new Date(Date.now() - 1000 * 60 * 21).toISOString(),
+    createdAt: '2026-05-05T12:00:00.000Z',
+  },
+  {
+    id: 'admin-support-agent',
+    name: 'Support Agent',
+    email: 'support-agent@happychair.internal',
+    role: 'support_agent',
+    status: 'Active',
+    lastLoginAt: new Date(Date.now() - 1000 * 60 * 47).toISOString(),
+    createdAt: '2026-05-08T12:00:00.000Z',
+  },
+  {
+    id: 'admin-client-success',
+    name: 'Client Success',
+    email: 'client-success@happychair.internal',
+    role: 'client_success',
+    status: 'Active',
+    lastLoginAt: new Date(Date.now() - 1000 * 60 * 67).toISOString(),
+    createdAt: '2026-05-09T12:00:00.000Z',
+  },
+  {
+    id: 'admin-marketing',
+    name: 'Marketing',
+    email: 'marketing@happychair.internal',
+    role: 'marketing',
+    status: 'Active',
+    lastLoginAt: new Date(Date.now() - 1000 * 60 * 126).toISOString(),
+    createdAt: '2026-05-11T12:00:00.000Z',
   },
   {
     id: 'admin-finance',

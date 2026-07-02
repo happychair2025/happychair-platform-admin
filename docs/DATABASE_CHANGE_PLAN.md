@@ -10,6 +10,7 @@ This plan supports:
 - Organization, property, and venue read contracts for platform operations.
 - Module activation tracking.
 - Usage, revenue, registration, support, health, impersonation, audit, and agent event models.
+- Admin Action Requests / Server Action Queue for future production mutations.
 - Read-only views that match the frontend data layer.
 
 ## Affected Tables
@@ -40,6 +41,7 @@ New Platform Admin-owned tables:
 - `platform_admin.support_issues`
 - `platform_admin.health_checks`
 - `platform_admin.remediation_packets`
+- `platform_admin.admin_action_requests`
 - `platform_admin.agent_definitions`
 - `platform_admin.agent_events`
 - `platform_admin.feature_flags`
@@ -57,6 +59,7 @@ New public read views:
 - `platform_admin_billing_risks_read`
 - `platform_admin_support_issues_read`
 - `platform_admin_remediation_packets_read`
+- `platform_admin_admin_action_requests_read`
 - `platform_admin_health_signals_read`
 - `platform_admin_impersonation_targets_read`
 - `platform_admin_impersonation_sessions_read`
@@ -85,7 +88,7 @@ No broad anonymous or authenticated grants are included in these draft migration
 
 `platform_admin.audit_logs` is append-only through database triggers that block update and delete.
 
-Future mutations for modules, billing, impersonation, support actions, feature flags, and AI-agent actions must write audit events.
+Future mutations for modules, billing, impersonation, support actions, feature flags, and AI-agent actions must create `platform_admin.admin_action_requests` records and write audit events before server handlers mutate production state.
 
 ## Rollback Plan
 
@@ -96,6 +99,12 @@ supabase/rollback/202605260001_platform_admin_internal_schema.rollback.sql
 ```
 
 Rollback removes only Platform Admin-owned read views and the `platform_admin` schema. Do not run after production Platform Admin data exists unless a backup and migration plan have been approved.
+
+The action request queue also has a focused rollback:
+
+```bash
+supabase/rollback/202605300001_platform_admin_action_requests.rollback.sql
+```
 
 ## Review Checklist
 

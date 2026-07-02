@@ -9,6 +9,7 @@ import {
   Mail,
   Megaphone,
   MousePointerClick,
+  PlayCircle,
   SearchCheck,
   Share2,
   ShieldCheck,
@@ -20,9 +21,12 @@ import DataTable from '../../components/admin/DataTable'
 import MetricCard from '../../components/admin/MetricCard'
 import PageHeader from '../../components/admin/PageHeader'
 import StatusPill from '../../components/admin/StatusPill'
-import { runAdminAction } from '../../lib/admin-actions/actionGateway'
+import { queueAdminActionRequest, runAdminAction } from '../../lib/admin-actions/actionGateway'
+import { createAdminActionScope } from '../../lib/admin-actions/actionRequests'
+import { localAgentRuntimeRule, runLocalAgent, saveLocalAgentRun, useLocalAgentRuns } from '../../lib/agents/localAgentRuntime'
 import type { AgentCategory, AgentDefinition } from '../../lib/mock-data/mockPlatform'
 import { usePlatformData } from '../../lib/platform-data/PlatformDataContext'
+import { hasPermission } from '../../lib/permissions/permissions'
 
 interface AgentsPageProps {
   session: AdminSession
@@ -61,6 +65,7 @@ function statusTone(status: string): 'ok' | 'warn' | 'info' | 'neutral' {
 export default function AgentsPage({ session }: AgentsPageProps) {
   const { data } = usePlatformData()
   const { agentDefinitions, agentEvents } = data
+  const localAgentRuns = useLocalAgentRuns()
   const [selectedKey, setSelectedKey] = useState(agentDefinitions[0]?.key ?? 'marketing')
   const [notice, setNotice] = useState('')
   const selectedAgent = useMemo(
@@ -76,10 +81,31 @@ export default function AgentsPage({ session }: AgentsPageProps) {
       .filter(group => group.agents.length > 0),
     [agentDefinitions],
   )
-  const selectedEvents = selectedAgent ? agentEvents.filter(event => event.agentKey === selectedAgent.key) : []
+  const localAgentEvents = useMemo(() => localAgentRuns.flatMap(run => run.generatedEvents), [localAgentRuns])
+  const allAgentEvents = useMemo(() => {
+    const localIds = new Set(localAgentEvents.map(event => event.id))
+    return [
+      ...localAgentEvents,
+      ...agentEvents.filter(event => !localIds.has(event.id)),
+    ]
+  }, [agentEvents, localAgentEvents])
+  const selectedEvents = selectedAgent ? allAgentEvents.filter(event => event.agentKey === selectedAgent.key) : []
   const monitoringReady = agentDefinitions.filter(agent => agent.status === 'Monitoring Ready').length
-  const needsReview = agentEvents.filter(event => event.status === 'Needs Review' || event.status === 'Queued').length
-  const auditRequired = agentEvents.filter(event => event.auditRequired).length
+  const needsReview = allAgentEvents.filter(event => event.status === 'Needs Review' || event.status === 'Queued').length
+  const auditRequired = allAgentEvents.filter(event => event.auditRequired).length
+  const canManageAgents = hasPermission(session.role, 'agents.manage')
+
+  const runAgentScan = (agent: AgentDefinition) => {
+    const run = saveLocalAgentRun(runLocalAgent(agent, data))
+    setNotice(run.summary)
+  }
+
+  const runReadyAgentScans = () => {
+    const readyAgents = agentDefinitions.filter(agent => agent.status === 'Monitoring Ready')
+    const runs = readyAgents.map(agent => saveLocalAgentRun(runLocalAgent(agent, data)))
+    const generatedCount = runs.reduce((sum, run) => sum + run.generatedEvents.length, 0)
+    setNotice(`Local ready-agent scan completed: ${runs.length} agents ran and generated ${generatedCount} reviewable finding${generatedCount === 1 ? '' : 's'}.`)
+  }
 
   const auditAgentAction = (agent: AgentDefinition, action: string) => {
     const result = runAdminAction(session, {
@@ -92,18 +118,43 @@ export default function AgentsPage({ session }: AgentsPageProps) {
     setNotice(result.ok ? `${agent.name} review recorded in Audit Logs.` : result.message)
   }
 
+  const queueAgentRecommendation = (agent: AgentDefinition) => {
+    const reviewEvent = selectedEvents.find(event => event.status === 'Needs Review' || event.status === 'Queued') ?? selectedEvents[0]
+    const result = queueAdminActionRequest(session, {
+      actionType: 'agent_recommended_action',
+      title: `Approve ${agent.name} recommendation`,
+      permission: 'agents.manage',
+      scope: createAdminActionScope({
+        organizationName: reviewEvent?.organizationName,
+        propertyName: reviewEvent?.propertyName,
+        venueName: reviewEvent?.venueName,
+        label: reviewEvent?.venueName ?? reviewEvent?.propertyName ?? reviewEvent?.organizationName ?? agent.name,
+      }),
+      reason: reviewEvent?.outputSummary ?? `${agent.name} recommendation requires human approval before any client-state change.`,
+      rollbackNotes: 'Keep the agent event in review state. Do not send customer messages, change modules, alter billing, or mutate support records unless the server handler is explicitly approved.',
+      severity: 'warning',
+      metadata: {
+        agentKey: agent.key,
+        agentName: agent.name,
+        agentEventId: reviewEvent?.id,
+        eventType: reviewEvent?.eventType,
+      },
+    })
+    setNotice(result.ok ? `${agent.name} recommendation queued for approval.` : result.message)
+  }
+
   return (
     <div className="page-stack">
       <PageHeader
         eyebrow="Agent Foundation"
-        title="AI Agents"
-        description="Future Claude-agent workspace for monitoring, recommendations, summaries, drafts, classifications, and flags. This phase creates safe hooks only."
+        title="Agent Foundation"
+        description="Local read-only agents can scan platform signals, create reviewable findings, and queue human-approved recommendations. LLM/provider execution comes later."
       />
       {notice && <p className="warning-copy">{notice}</p>}
 
       <div className="metrics-grid compact">
         <MetricCard label="Agent Workflows" value={String(agentDefinitions.length)} delta={`${groupedAgents.length} grouped categories`} tone="neutral" icon={<Bot size={16} />} />
-        <MetricCard label="Monitoring Ready" value={String(monitoringReady)} delta="Read-only signal watchers" tone="ok" icon={<ShieldCheck size={16} />} />
+        <MetricCard label="Local Runs" value={String(localAgentRuns.length)} delta="Deterministic scans" tone="ok" icon={<PlayCircle size={16} />} />
         <MetricCard label="Needs Review" value={String(needsReview)} delta="Human approval queue" tone={needsReview ? 'warn' : 'ok'} icon={<ClipboardCheck size={16} />} />
         <MetricCard label="Audit Required" value={String(auditRequired)} delta="Events with future audit hooks" tone="warn" icon={<CheckCircle2 size={16} />} />
       </div>
@@ -115,6 +166,26 @@ export default function AgentsPage({ session }: AgentsPageProps) {
           <span>Any future action that changes billing, modules, permissions, messaging, support records, or client state must require a permission check, human confirmation, audit log entry, and visible activity record.</span>
         </div>
         <StatusPill label="No silent mutations" tone="danger" />
+      </section>
+
+      <section className="panel agent-runtime-panel">
+        <div>
+          <p className="eyebrow">Runtime Status</p>
+          <h2>Local read-only agents are active</h2>
+          <span>{localAgentRuntimeRule}</span>
+        </div>
+        <div className="runtime-status-grid">
+          <div><StatusPill label="Present" tone="ok" /><strong>Local rules runtime</strong></div>
+          <div><StatusPill label="Present" tone="ok" /><strong>Durable browser run ledger</strong></div>
+          <div><StatusPill label="Missing" tone="warn" /><strong>LLM/provider adapter</strong></div>
+          <div><StatusPill label="Missing" tone="warn" /><strong>Server job scheduler</strong></div>
+        </div>
+        <div className="support-actions">
+          <button className="ghost-action" onClick={runReadyAgentScans}>
+            <PlayCircle size={15} strokeWidth={1.8} />
+            Run Ready Agents
+          </button>
+        </div>
       </section>
 
       <div className="agent-layout">
@@ -213,15 +284,26 @@ export default function AgentsPage({ session }: AgentsPageProps) {
             </div>
           </div>
 
-          <button className="primary-action" onClick={() => auditAgentAction(selectedAgent, 'draft_reviewed')}>
-            Record Mock Review
-          </button>
+          <div className="support-actions">
+            <button className="ghost-action" onClick={() => runAgentScan(selectedAgent)}>
+              <PlayCircle size={15} strokeWidth={1.8} />
+              Run Local Scan
+            </button>
+            <button className="ghost-action" onClick={() => auditAgentAction(selectedAgent, 'draft_reviewed')}>
+              <CheckCircle2 size={15} strokeWidth={1.8} />
+              Record Review
+            </button>
+            <button className="ghost-action" disabled={!canManageAgents} onClick={() => queueAgentRecommendation(selectedAgent)}>
+              <ClipboardCheck size={15} strokeWidth={1.8} />
+              Queue Recommendation
+            </button>
+          </div>
         </aside> : <aside className="detail-panel"><div className="empty-state compact">No agent contracts are available yet.</div></aside>}
       </div>
 
       <DataTable
         label="Agent Event Hooks"
-        rows={agentEvents}
+        rows={allAgentEvents}
         columns={[
           {
             key: 'agent',
@@ -257,6 +339,50 @@ export default function AgentsPage({ session }: AgentsPageProps) {
             sortable: true,
             searchValue: row => row.auditRequired ? 'Required' : 'Optional',
             render: row => <StatusPill label={row.auditRequired ? 'Required' : 'Optional'} tone={row.auditRequired ? 'warn' : 'neutral'} />,
+          },
+        ]}
+      />
+
+      <DataTable
+        label="Local Agent Runs"
+        rows={localAgentRuns}
+        pageSize={5}
+        emptyTitle="No local agent runs have been recorded yet."
+        columns={[
+          {
+            key: 'agent',
+            header: 'Agent',
+            sortable: true,
+            searchValue: row => row.agentName,
+            render: row => <strong>{row.agentName}</strong>,
+          },
+          {
+            key: 'runtime',
+            header: 'Runtime',
+            sortable: true,
+            searchValue: row => row.runtime,
+            render: row => <StatusPill label="Local Rules" tone="ok" />,
+          },
+          {
+            key: 'status',
+            header: 'Status',
+            sortable: true,
+            searchValue: row => row.status,
+            render: row => <StatusPill label={row.status} tone={row.status === 'Completed' ? 'ok' : 'neutral'} />,
+          },
+          {
+            key: 'findings',
+            header: 'Findings',
+            sortable: true,
+            searchValue: row => String(row.generatedEvents.length),
+            render: row => row.generatedEvents.length,
+          },
+          {
+            key: 'created',
+            header: 'Created',
+            sortable: true,
+            searchValue: row => row.createdAt,
+            render: row => new Date(row.createdAt).toLocaleString(),
           },
         ]}
       />

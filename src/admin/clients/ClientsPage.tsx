@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Building2, HeartPulse, MapPinned, Store } from 'lucide-react'
 import type { AdminSession } from '../../App'
 import ActivityTimeline from '../../components/admin/ActivityTimeline'
@@ -21,17 +21,24 @@ function statusTone(status: OrganizationSummary['healthStatus']) {
 
 interface ClientsPageProps {
   session: AdminSession
+  initialOrganizationId?: string
 }
 
-export default function ClientsPage({ session }: ClientsPageProps) {
+export default function ClientsPage({ session, initialOrganizationId }: ClientsPageProps) {
   const { data } = usePlatformData()
   const { activityEvents, moduleActivations, organizations, properties, supportNotes, venues } = data
-  const [selectedId, setSelectedId] = useState(organizations[0]?.id ?? '')
+  const [selectedId, setSelectedId] = useState(initialOrganizationId ?? organizations[0]?.id ?? '')
   const selected = organizations.find(org => org.id === selectedId) ?? organizations[0]
   const selectedProperties = selected ? properties.filter(property => property.organizationId === selected.id) : []
   const selectedVenues = selected ? venues.filter(venue => venue.organizationId === selected.id) : []
   const selectedActivity = selected ? activityEvents.filter(event => event.scopeId === selected.id) : []
   const selectedModules = selected ? moduleActivations.filter(activation => activation.scopeId === selected.id || selectedVenues.some(venue => venue.id === activation.scopeId)) : []
+
+  useEffect(() => {
+    if (initialOrganizationId && organizations.some(org => org.id === initialOrganizationId)) {
+      setSelectedId(initialOrganizationId)
+    }
+  }, [initialOrganizationId, organizations])
 
   return (
     <div className="page-stack">

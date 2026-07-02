@@ -3,6 +3,7 @@
 -- Do not run if production Platform Admin data has been created without a backup.
 
 drop view if exists public.platform_admin_usage_analytics_read;
+drop view if exists public.platform_admin_admin_action_requests_read;
 drop view if exists public.platform_admin_activity_events_read;
 drop view if exists public.platform_admin_support_notes_read;
 drop view if exists public.platform_admin_agent_events_read;

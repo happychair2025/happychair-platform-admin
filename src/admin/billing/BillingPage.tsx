@@ -5,7 +5,8 @@ import DataTable from '../../components/admin/DataTable'
 import MetricCard from '../../components/admin/MetricCard'
 import PageHeader from '../../components/admin/PageHeader'
 import StatusPill from '../../components/admin/StatusPill'
-import { runAdminAction } from '../../lib/admin-actions/actionGateway'
+import { queueAdminActionRequest } from '../../lib/admin-actions/actionGateway'
+import { createAdminActionScope } from '../../lib/admin-actions/actionRequests'
 import { usePlatformData } from '../../lib/platform-data/PlatformDataContext'
 import { hasPermission } from '../../lib/permissions/permissions'
 
@@ -32,14 +33,19 @@ export default function BillingPage({ session }: BillingPageProps) {
   const totalMrr = data.organizations.reduce((sum, row) => sum + row.mrr, 0)
 
   const recordBillingReview = (scope: string, severity: 'notice' | 'warning' = 'notice') => {
-    const result = runAdminAction(session, {
+    const result = queueAdminActionRequest(session, {
+      actionType: 'billing_review_action',
+      title: `Review billing account for ${scope}`,
       permission: 'billing.manage',
-      scope,
-      actionKey: 'billing.reviewed.mock',
-      actionLabel: `Reviewed billing account for ${scope}`,
+      scope: createAdminActionScope({ organizationName: scope, label: scope }),
+      reason: `Finance review was requested for ${scope}. Provider-side billing changes must wait for server-side finance handling.`,
+      rollbackNotes: 'Do not alter provider billing state from the browser. Keep the prior invoice, credit, discount, and payment-method state if review handling fails.',
       severity,
+      metadata: {
+        billingScope: scope,
+      },
     })
-    setNotice(result.ok ? `Billing review for ${scope} recorded in Audit Logs.` : result.message)
+    setNotice(result.ok ? `Billing review request for ${scope} queued.` : result.message)
   }
 
   return (
@@ -93,7 +99,7 @@ export default function BillingPage({ session }: BillingPageProps) {
                 <span>{risk.nextAction}</span>
                 <button className="ghost-action" disabled={!canManage} onClick={() => recordBillingReview(risk.organizationName, 'warning')}>
                   <FileText size={15} strokeWidth={1.8} />
-                  Record Review
+                  Queue Review
                 </button>
               </article>
             ))}
