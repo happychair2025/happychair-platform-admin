@@ -44,69 +44,9 @@ import {
   Wrench,
   ScrollText,
 } from 'lucide-react'
-import { useEffect, useMemo, useState } from 'react'
+import { lazy, Suspense, useEffect, useMemo, useState } from 'react'
 import type { AdminSession } from '../../App'
-import ActionRequestLaunchpadPage from '../../admin/action-requests/ActionRequestLaunchpadPage'
-import ActionTimelinePage from '../../admin/action-requests/ActionTimelinePage'
-import AdminActionRequestsPage from '../../admin/action-requests/AdminActionRequestsPage'
-import ApprovalCenterPage from '../../admin/action-requests/ApprovalCenterPage'
-import ExecutionHandoffPage from '../../admin/action-requests/ExecutionHandoffPage'
-import ExecutionLedgerPage from '../../admin/action-requests/ExecutionLedgerPage'
-import ServerAdapterReadinessPage from '../../admin/action-requests/ServerAdapterReadinessPage'
-import AgentsPage from '../../admin/agents/AgentsPage'
-import AttentionQueuePage from '../../admin/attention/AttentionQueuePage'
-import AuditLogsPage from '../../admin/audit/AuditLogsPage'
-import BillingPage from '../../admin/billing/BillingPage'
-import Client360Page from '../../admin/client-360/Client360Page'
-import ClientSuccessWorkspacePage from '../../admin/client-success/ClientSuccessWorkspacePage'
-import ClientsPage from '../../admin/clients/ClientsPage'
-import BriefArchivePage from '../../admin/command-digest/BriefArchivePage'
-import CommandCadencePage from '../../admin/command-cadence/CommandCadencePage'
-import CommandDigestPage from '../../admin/command-digest/CommandDigestPage'
-import DigestReviewCadencePage from '../../admin/command-digest/DigestReviewCadencePage'
-import EscalationInboxPage from '../../admin/command-digest/EscalationInboxPage'
-import CommandWorkQueuePage from '../../admin/command-work/CommandWorkQueuePage'
-import CommandHandoffTimelinePage from '../../admin/command-work/CommandHandoffTimelinePage'
-import DecisionBriefBuilderPage from '../../admin/command-work/DecisionBriefBuilderPage'
-import ExceptionSlaPolicyBuilderPage from '../../admin/command-work/ExceptionSlaPolicyBuilderPage'
-import ExecutiveMorningReviewPage from '../../admin/command-work/ExecutiveMorningReviewPage'
-import OperatingExceptionsInboxPage from '../../admin/command-work/OperatingExceptionsInboxPage'
-import OwnerCommitmentLedgerPage from '../../admin/command-work/OwnerCommitmentLedgerPage'
-import OwnerDecisionRoomPage from '../../admin/command-work/OwnerDecisionRoomPage'
-import OperatorDailyBriefPage from '../../admin/command-work/OperatorDailyBriefPage'
-import OwnerActionCalendarPage from '../../admin/command-work/OwnerActionCalendarPage'
-import DataQualityPage from '../../admin/data-quality/DataQualityPage'
-import ExecutiveDashboard from '../../admin/dashboard/ExecutiveDashboard'
-import FeatureFlagsPage from '../../admin/feature-flags/FeatureFlagsPage'
-import ClientHealthPage from '../../admin/health/ClientHealthPage'
-import SystemHealthPage from '../../admin/health/SystemHealthPage'
-import IncidentCommandPage from '../../admin/incidents/IncidentCommandPage'
-import ImpersonationPage, { type ActiveImpersonationSession } from '../../admin/impersonation/ImpersonationPage'
-import LaunchReadinessPage from '../../admin/launch/LaunchReadinessPage'
-import LifecycleCommandPage from '../../admin/lifecycle/LifecycleCommandPage'
-import ModulesPage from '../../admin/modules/ModulesPage'
-import CoverageLedgerPage from '../../admin/ownership/CoverageLedgerPage'
-import NotificationRoutingPage from '../../admin/ownership/NotificationRoutingPage'
-import OnCallSchedulePage from '../../admin/ownership/OnCallSchedulePage'
-import OwnershipSlaPage from '../../admin/ownership/OwnershipSlaPage'
-import PlaceholderPage from '../../admin/placeholder/PlaceholderPage'
-import PermissionSimulatorPage from '../../admin/permissions/PermissionSimulatorPage'
-import PropertiesPage from '../../admin/properties/PropertiesPage'
-import RegistrationsPage from '../../admin/registrations/RegistrationsPage'
-import ExportCenterPage from '../../admin/reports/ExportCenterPage'
-import ReportsPage from '../../admin/reports/ReportsPage'
-import RevenuePage from '../../admin/revenue/RevenuePage'
-import ResponsePlaybooksPage from '../../admin/watch-center/ResponsePlaybooksPage'
-import SavedViewsPage from '../../admin/saved-views/SavedViewsPage'
-import SlaEscalationBoardPage from '../../admin/watch-center/SlaEscalationBoardPage'
-import AdminSettingsPage from '../../admin/settings/AdminSettingsPage'
-import SupportCenterPage from '../../admin/support/SupportCenterPage'
-import VenueSupportPage from '../../admin/support/VenueSupportPage'
-import TroubleshootingPage from '../../admin/troubleshooting/TroubleshootingPage'
-import UsageAnalyticsPage from '../../admin/usage/UsageAnalyticsPage'
-import VenuesPage from '../../admin/venues/VenuesPage'
-import WatchCenterPage from '../../admin/watch-center/WatchCenterPage'
-import WatchRulesPage from '../../admin/watch-center/WatchRulesPage'
+import type { ActiveImpersonationSession } from '../../admin/impersonation/ImpersonationPage'
 import { queueAdminActionRequest } from '../../lib/admin-actions/actionGateway'
 import { createAdminActionScope } from '../../lib/admin-actions/actionRequests'
 import { moduleRegistry } from '../../lib/modules/registry'
@@ -263,9 +203,79 @@ const navItems: NavItem[] = [
 
 const groupOrder: NavItem['group'][] = ['Command', 'Clients', 'Operations', 'Company']
 
+const ActionRequestLaunchpadPage = lazy(() => import('../../admin/action-requests/ActionRequestLaunchpadPage'))
+const ActionTimelinePage = lazy(() => import('../../admin/action-requests/ActionTimelinePage'))
+const AdminActionRequestsPage = lazy(() => import('../../admin/action-requests/AdminActionRequestsPage'))
+const ApprovalCenterPage = lazy(() => import('../../admin/action-requests/ApprovalCenterPage'))
+const ExecutionHandoffPage = lazy(() => import('../../admin/action-requests/ExecutionHandoffPage'))
+const ExecutionLedgerPage = lazy(() => import('../../admin/action-requests/ExecutionLedgerPage'))
+const ServerAdapterReadinessPage = lazy(() => import('../../admin/action-requests/ServerAdapterReadinessPage'))
+const AgentsPage = lazy(() => import('../../admin/agents/AgentsPage'))
+const AttentionQueuePage = lazy(() => import('../../admin/attention/AttentionQueuePage'))
+const AuditLogsPage = lazy(() => import('../../admin/audit/AuditLogsPage'))
+const BillingPage = lazy(() => import('../../admin/billing/BillingPage'))
+const Client360Page = lazy(() => import('../../admin/client-360/Client360Page'))
+const ClientSuccessWorkspacePage = lazy(() => import('../../admin/client-success/ClientSuccessWorkspacePage'))
+const ClientsPage = lazy(() => import('../../admin/clients/ClientsPage'))
+const CommandCadencePage = lazy(() => import('../../admin/command-cadence/CommandCadencePage'))
+const BriefArchivePage = lazy(() => import('../../admin/command-digest/BriefArchivePage'))
+const CommandDigestPage = lazy(() => import('../../admin/command-digest/CommandDigestPage'))
+const DigestReviewCadencePage = lazy(() => import('../../admin/command-digest/DigestReviewCadencePage'))
+const EscalationInboxPage = lazy(() => import('../../admin/command-digest/EscalationInboxPage'))
+const CommandHandoffTimelinePage = lazy(() => import('../../admin/command-work/CommandHandoffTimelinePage'))
+const CommandWorkQueuePage = lazy(() => import('../../admin/command-work/CommandWorkQueuePage'))
+const DecisionBriefBuilderPage = lazy(() => import('../../admin/command-work/DecisionBriefBuilderPage'))
+const ExceptionSlaPolicyBuilderPage = lazy(() => import('../../admin/command-work/ExceptionSlaPolicyBuilderPage'))
+const ExecutiveMorningReviewPage = lazy(() => import('../../admin/command-work/ExecutiveMorningReviewPage'))
+const OperatingExceptionsInboxPage = lazy(() => import('../../admin/command-work/OperatingExceptionsInboxPage'))
+const OperatorDailyBriefPage = lazy(() => import('../../admin/command-work/OperatorDailyBriefPage'))
+const OwnerActionCalendarPage = lazy(() => import('../../admin/command-work/OwnerActionCalendarPage'))
+const OwnerCommitmentLedgerPage = lazy(() => import('../../admin/command-work/OwnerCommitmentLedgerPage'))
+const OwnerDecisionRoomPage = lazy(() => import('../../admin/command-work/OwnerDecisionRoomPage'))
+const DataQualityPage = lazy(() => import('../../admin/data-quality/DataQualityPage'))
+const ExecutiveDashboard = lazy(() => import('../../admin/dashboard/ExecutiveDashboard'))
+const FeatureFlagsPage = lazy(() => import('../../admin/feature-flags/FeatureFlagsPage'))
+const ClientHealthPage = lazy(() => import('../../admin/health/ClientHealthPage'))
+const SystemHealthPage = lazy(() => import('../../admin/health/SystemHealthPage'))
+const IncidentCommandPage = lazy(() => import('../../admin/incidents/IncidentCommandPage'))
+const ImpersonationPage = lazy(() => import('../../admin/impersonation/ImpersonationPage'))
+const LaunchReadinessPage = lazy(() => import('../../admin/launch/LaunchReadinessPage'))
+const LifecycleCommandPage = lazy(() => import('../../admin/lifecycle/LifecycleCommandPage'))
+const ModulesPage = lazy(() => import('../../admin/modules/ModulesPage'))
+const CoverageLedgerPage = lazy(() => import('../../admin/ownership/CoverageLedgerPage'))
+const NotificationRoutingPage = lazy(() => import('../../admin/ownership/NotificationRoutingPage'))
+const OnCallSchedulePage = lazy(() => import('../../admin/ownership/OnCallSchedulePage'))
+const OwnershipSlaPage = lazy(() => import('../../admin/ownership/OwnershipSlaPage'))
+const PlaceholderPage = lazy(() => import('../../admin/placeholder/PlaceholderPage'))
+const PermissionSimulatorPage = lazy(() => import('../../admin/permissions/PermissionSimulatorPage'))
+const PropertiesPage = lazy(() => import('../../admin/properties/PropertiesPage'))
+const RegistrationsPage = lazy(() => import('../../admin/registrations/RegistrationsPage'))
+const ExportCenterPage = lazy(() => import('../../admin/reports/ExportCenterPage'))
+const ReportsPage = lazy(() => import('../../admin/reports/ReportsPage'))
+const RevenuePage = lazy(() => import('../../admin/revenue/RevenuePage'))
+const SavedViewsPage = lazy(() => import('../../admin/saved-views/SavedViewsPage'))
+const AdminSettingsPage = lazy(() => import('../../admin/settings/AdminSettingsPage'))
+const SupportCenterPage = lazy(() => import('../../admin/support/SupportCenterPage'))
+const VenueSupportPage = lazy(() => import('../../admin/support/VenueSupportPage'))
+const TroubleshootingPage = lazy(() => import('../../admin/troubleshooting/TroubleshootingPage'))
+const UsageAnalyticsPage = lazy(() => import('../../admin/usage/UsageAnalyticsPage'))
+const VenuesPage = lazy(() => import('../../admin/venues/VenuesPage'))
+const ResponsePlaybooksPage = lazy(() => import('../../admin/watch-center/ResponsePlaybooksPage'))
+const SlaEscalationBoardPage = lazy(() => import('../../admin/watch-center/SlaEscalationBoardPage'))
+const WatchCenterPage = lazy(() => import('../../admin/watch-center/WatchCenterPage'))
+const WatchRulesPage = lazy(() => import('../../admin/watch-center/WatchRulesPage'))
+
 interface AppShellProps {
   session: AdminSession
   onLogout: () => void
+}
+
+function PageLoadingFallback() {
+  return (
+    <div className="empty-state compact" role="status">
+      Loading admin workspace...
+    </div>
+  )
 }
 
 export default function AppShell({ session, onLogout }: AppShellProps) {
@@ -847,7 +857,11 @@ export default function AppShell({ session, onLogout }: AppShellProps) {
             </div>
           </section>
         )}
-        <div className="main-content">{renderPage()}</div>
+        <div className="main-content">
+          <Suspense fallback={<PageLoadingFallback />}>
+            {renderPage()}
+          </Suspense>
+        </div>
       </main>
     </div>
   )
