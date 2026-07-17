@@ -122,7 +122,7 @@ interface NavItem {
   label: string
   permission: PermissionKey
   icon: typeof LayoutDashboard
-  group: 'Command' | 'Clients' | 'Operations' | 'Company'
+  group: 'Today' | 'Clients' | 'Support' | 'Revenue' | 'Growth' | 'Automation' | 'Platform'
 }
 
 type GlobalSearchResultType = 'Organization' | 'Registration' | 'Property' | 'Venue' | 'Support' | 'Module'
@@ -138,70 +138,112 @@ interface GlobalSearchResult {
 }
 
 const navItems: NavItem[] = [
-  { id: 'dashboard', label: 'Executive Dashboard', permission: 'dashboard.view', icon: LayoutDashboard, group: 'Command' },
-  { id: 'executive-morning-review', label: 'Morning Review', permission: 'dashboard.view', icon: Gauge, group: 'Command' },
-  { id: 'owner-decision-room', label: 'Decision Room', permission: 'dashboard.view', icon: FileCheck2, group: 'Command' },
-  { id: 'owner-commitment-ledger', label: 'Commitments', permission: 'dashboard.view', icon: ListChecks, group: 'Command' },
-  { id: 'action-request-launchpad', label: 'Action Launchpad', permission: 'admin_actions.view', icon: Send, group: 'Command' },
-  { id: 'command-work', label: 'Command Queue', permission: 'dashboard.view', icon: ListChecks, group: 'Command' },
-  { id: 'decision-briefs', label: 'Decision Briefs', permission: 'dashboard.view', icon: FileCheck2, group: 'Command' },
-  { id: 'operator-daily-brief', label: 'Daily Brief', permission: 'dashboard.view', icon: Newspaper, group: 'Command' },
-  { id: 'owner-action-calendar', label: 'Owner Calendar', permission: 'dashboard.view', icon: CalendarClock, group: 'Command' },
-  { id: 'command-handoff-timeline', label: 'Handoff Timeline', permission: 'dashboard.view', icon: GitBranch, group: 'Command' },
-  { id: 'operating-exceptions', label: 'Exceptions Inbox', permission: 'dashboard.view', icon: Siren, group: 'Command' },
-  { id: 'exception-sla-policies', label: 'Exception SLA', permission: 'notifications.view', icon: TimerReset, group: 'Command' },
-  { id: 'command-digest', label: 'Command Digest', permission: 'dashboard.view', icon: Newspaper, group: 'Command' },
-  { id: 'brief-archive', label: 'Brief Archive', permission: 'dashboard.view', icon: Archive, group: 'Command' },
-  { id: 'digest-cadence', label: 'Review Cadence', permission: 'dashboard.view', icon: CalendarClock, group: 'Command' },
-  { id: 'escalation-inbox', label: 'Escalation Inbox', permission: 'dashboard.view', icon: Siren, group: 'Command' },
-  { id: 'notification-routing', label: 'Routing Center', permission: 'notifications.view', icon: RadioTower, group: 'Command' },
-  { id: 'on-call-schedule', label: 'On-Call Schedule', permission: 'notifications.view', icon: CalendarClock, group: 'Command' },
-  { id: 'coverage-ledger', label: 'Coverage Ledger', permission: 'notifications.view', icon: BookOpenCheck, group: 'Command' },
-  { id: 'watch-center', label: 'Watch Center', permission: 'notifications.view', icon: BellRing, group: 'Command' },
-  { id: 'watch-rules', label: 'Watch Rules', permission: 'notifications.view', icon: SlidersHorizontal, group: 'Command' },
-  { id: 'response-playbooks', label: 'Response Playbooks', permission: 'notifications.view', icon: BookOpenCheck, group: 'Command' },
-  { id: 'sla-board', label: 'SLA Board', permission: 'notifications.view', icon: TimerReset, group: 'Command' },
-  { id: 'attention', label: 'Attention Queue', permission: 'dashboard.view', icon: BellRing, group: 'Command' },
-  { id: 'command-cadence', label: 'Command Cadence', permission: 'dashboard.view', icon: CalendarClock, group: 'Command' },
-  { id: 'registrations', label: 'Registrations', permission: 'registrations.view', icon: UserPlus, group: 'Command' },
-  { id: 'lifecycle', label: 'Lifecycle Command', permission: 'registrations.view', icon: Workflow, group: 'Command' },
-  { id: 'revenue', label: 'Revenue', permission: 'revenue.view', icon: CircleDollarSign, group: 'Command' },
+  { id: 'dashboard', label: 'Today', permission: 'dashboard.view', icon: LayoutDashboard, group: 'Today' },
+  { id: 'executive-morning-review', label: 'Morning Review', permission: 'dashboard.view', icon: Gauge, group: 'Today' },
+  { id: 'owner-decision-room', label: 'Decision Room', permission: 'dashboard.view', icon: FileCheck2, group: 'Today' },
+  { id: 'owner-commitment-ledger', label: 'Commitments', permission: 'dashboard.view', icon: ListChecks, group: 'Today' },
+  { id: 'action-request-launchpad', label: 'Action Launchpad', permission: 'admin_actions.view', icon: Send, group: 'Automation' },
+  { id: 'command-work', label: 'Command Queue', permission: 'dashboard.view', icon: ListChecks, group: 'Today' },
+  { id: 'decision-briefs', label: 'Decision Briefs', permission: 'dashboard.view', icon: FileCheck2, group: 'Automation' },
+  { id: 'operator-daily-brief', label: 'Daily Brief', permission: 'dashboard.view', icon: Newspaper, group: 'Automation' },
+  { id: 'owner-action-calendar', label: 'Owner Calendar', permission: 'dashboard.view', icon: CalendarClock, group: 'Automation' },
+  { id: 'command-handoff-timeline', label: 'Handoff Timeline', permission: 'dashboard.view', icon: GitBranch, group: 'Automation' },
+  { id: 'operating-exceptions', label: 'Exceptions Inbox', permission: 'dashboard.view', icon: Siren, group: 'Automation' },
+  { id: 'exception-sla-policies', label: 'Exception SLA', permission: 'notifications.view', icon: TimerReset, group: 'Automation' },
+  { id: 'command-digest', label: 'Command Digest', permission: 'dashboard.view', icon: Newspaper, group: 'Growth' },
+  { id: 'brief-archive', label: 'Brief Archive', permission: 'dashboard.view', icon: Archive, group: 'Growth' },
+  { id: 'digest-cadence', label: 'Review Cadence', permission: 'dashboard.view', icon: CalendarClock, group: 'Growth' },
+  { id: 'escalation-inbox', label: 'Escalation Inbox', permission: 'dashboard.view', icon: Siren, group: 'Growth' },
+  { id: 'notification-routing', label: 'Routing Center', permission: 'notifications.view', icon: RadioTower, group: 'Support' },
+  { id: 'on-call-schedule', label: 'On-Call Schedule', permission: 'notifications.view', icon: CalendarClock, group: 'Support' },
+  { id: 'coverage-ledger', label: 'Coverage Ledger', permission: 'notifications.view', icon: BookOpenCheck, group: 'Support' },
+  { id: 'watch-center', label: 'Watch Center', permission: 'notifications.view', icon: BellRing, group: 'Automation' },
+  { id: 'watch-rules', label: 'Watch Rules', permission: 'notifications.view', icon: SlidersHorizontal, group: 'Automation' },
+  { id: 'response-playbooks', label: 'Response Playbooks', permission: 'notifications.view', icon: BookOpenCheck, group: 'Automation' },
+  { id: 'sla-board', label: 'SLA Board', permission: 'notifications.view', icon: TimerReset, group: 'Automation' },
+  { id: 'attention', label: 'Attention Queue', permission: 'dashboard.view', icon: BellRing, group: 'Today' },
+  { id: 'command-cadence', label: 'Command Cadence', permission: 'dashboard.view', icon: CalendarClock, group: 'Automation' },
+  { id: 'registrations', label: 'Registrations', permission: 'registrations.view', icon: UserPlus, group: 'Revenue' },
+  { id: 'lifecycle', label: 'Lifecycle Command', permission: 'registrations.view', icon: Workflow, group: 'Revenue' },
+  { id: 'revenue', label: 'Revenue', permission: 'revenue.view', icon: CircleDollarSign, group: 'Revenue' },
   { id: 'client-360', label: 'Client 360', permission: 'clients.view', icon: GitBranch, group: 'Clients' },
   { id: 'client-success', label: 'Client Success', permission: 'clients.view', icon: HeartHandshake, group: 'Clients' },
   { id: 'clients', label: 'Clients', permission: 'clients.view', icon: Building2, group: 'Clients' },
   { id: 'organizations', label: 'Organizations', permission: 'organizations.view', icon: Building2, group: 'Clients' },
   { id: 'properties', label: 'Properties', permission: 'properties.view', icon: MapPinned, group: 'Clients' },
   { id: 'venues', label: 'Venues / Outlets', permission: 'venues.view', icon: Store, group: 'Clients' },
-  { id: 'modules', label: 'Modules', permission: 'modules.view', icon: PackageCheck, group: 'Operations' },
-  { id: 'usage', label: 'Usage Analytics', permission: 'usage.view', icon: Activity, group: 'Operations' },
-  { id: 'health', label: 'Client Health', permission: 'health.view', icon: HeartPulse, group: 'Operations' },
-  { id: 'support', label: 'Support Center', permission: 'support.view', icon: LifeBuoy, group: 'Operations' },
-  { id: 'venue-support', label: 'Venue Workbench', permission: 'support.view', icon: Store, group: 'Operations' },
-  { id: 'ownership-sla', label: 'Ownership / SLA', permission: 'dashboard.view', icon: TimerReset, group: 'Operations' },
-  { id: 'incidents', label: 'Incident Command', permission: 'support.view', icon: Siren, group: 'Operations' },
-  { id: 'troubleshooting', label: 'Troubleshooting', permission: 'troubleshooting.view', icon: Wrench, group: 'Operations' },
-  { id: 'action-requests', label: 'Action Requests', permission: 'admin_actions.view', icon: ListChecks, group: 'Operations' },
-  { id: 'approval-center', label: 'Approval Center', permission: 'admin_actions.view', icon: ShieldCheck, group: 'Operations' },
-  { id: 'execution-handoff', label: 'Execution Handoff', permission: 'admin_actions.view', icon: FileCheck2, group: 'Operations' },
-  { id: 'server-adapters', label: 'Server Adapters', permission: 'admin_actions.view', icon: Code2, group: 'Operations' },
-  { id: 'execution-ledger', label: 'Execution Ledger', permission: 'admin_actions.view', icon: ServerCog, group: 'Operations' },
-  { id: 'action-timeline', label: 'Action Timeline', permission: 'admin_actions.view', icon: CalendarClock, group: 'Operations' },
-  { id: 'impersonation', label: 'Impersonation', permission: 'impersonation.start', icon: UserRoundSearch, group: 'Operations' },
-  { id: 'audit', label: 'Audit Logs', permission: 'audit.view', icon: ScrollText, group: 'Operations' },
-  { id: 'agents', label: 'Agent Foundation', permission: 'agents.view', icon: Bot, group: 'Company' },
-  { id: 'launch-readiness', label: 'Launch Gate', permission: 'settings.view', icon: Gauge, group: 'Company' },
-  { id: 'reports', label: 'Reports', permission: 'reports.view', icon: FileBarChart, group: 'Company' },
-  { id: 'export-center', label: 'Export Center', permission: 'reports.view', icon: Download, group: 'Company' },
-  { id: 'saved-views', label: 'Saved Views', permission: 'saved_views.view', icon: BookmarkCheck, group: 'Company' },
-  { id: 'billing', label: 'Billing', permission: 'billing.view', icon: CreditCard, group: 'Company' },
-  { id: 'feature-flags', label: 'Feature Flags', permission: 'feature_flags.view', icon: Flag, group: 'Company' },
-  { id: 'permission-simulator', label: 'Permission Simulator', permission: 'settings.view', icon: KeyRound, group: 'Company' },
-  { id: 'data-quality', label: 'Data Quality', permission: 'health.view', icon: DatabaseZap, group: 'Company' },
-  { id: 'system-health', label: 'System Health', permission: 'health.view', icon: ServerCog, group: 'Company' },
-  { id: 'settings', label: 'Internal Access', permission: 'settings.view', icon: Settings, group: 'Company' },
+  { id: 'modules', label: 'Modules', permission: 'modules.view', icon: PackageCheck, group: 'Platform' },
+  { id: 'usage', label: 'Usage Analytics', permission: 'usage.view', icon: Activity, group: 'Clients' },
+  { id: 'health', label: 'Client Health', permission: 'health.view', icon: HeartPulse, group: 'Clients' },
+  { id: 'support', label: 'Support Center', permission: 'support.view', icon: LifeBuoy, group: 'Support' },
+  { id: 'venue-support', label: 'Venue Workbench', permission: 'support.view', icon: Store, group: 'Support' },
+  { id: 'ownership-sla', label: 'Ownership / SLA', permission: 'dashboard.view', icon: TimerReset, group: 'Support' },
+  { id: 'incidents', label: 'Incident Command', permission: 'support.view', icon: Siren, group: 'Support' },
+  { id: 'troubleshooting', label: 'Troubleshooting', permission: 'troubleshooting.view', icon: Wrench, group: 'Support' },
+  { id: 'action-requests', label: 'Action Requests', permission: 'admin_actions.view', icon: ListChecks, group: 'Automation' },
+  { id: 'approval-center', label: 'Approval Center', permission: 'admin_actions.view', icon: ShieldCheck, group: 'Automation' },
+  { id: 'execution-handoff', label: 'Execution Handoff', permission: 'admin_actions.view', icon: FileCheck2, group: 'Automation' },
+  { id: 'server-adapters', label: 'Server Adapters', permission: 'admin_actions.view', icon: Code2, group: 'Automation' },
+  { id: 'execution-ledger', label: 'Execution Ledger', permission: 'admin_actions.view', icon: ServerCog, group: 'Automation' },
+  { id: 'action-timeline', label: 'Action Timeline', permission: 'admin_actions.view', icon: CalendarClock, group: 'Automation' },
+  { id: 'impersonation', label: 'Impersonation', permission: 'impersonation.start', icon: UserRoundSearch, group: 'Support' },
+  { id: 'audit', label: 'Audit Logs', permission: 'audit.view', icon: ScrollText, group: 'Platform' },
+  { id: 'agents', label: 'Agent Foundation', permission: 'agents.view', icon: Bot, group: 'Growth' },
+  { id: 'launch-readiness', label: 'Launch Gate', permission: 'settings.view', icon: Gauge, group: 'Platform' },
+  { id: 'reports', label: 'Reports', permission: 'reports.view', icon: FileBarChart, group: 'Revenue' },
+  { id: 'export-center', label: 'Export Center', permission: 'reports.view', icon: Download, group: 'Revenue' },
+  { id: 'saved-views', label: 'Saved Views', permission: 'saved_views.view', icon: BookmarkCheck, group: 'Revenue' },
+  { id: 'billing', label: 'Billing', permission: 'billing.view', icon: CreditCard, group: 'Revenue' },
+  { id: 'feature-flags', label: 'Feature Flags', permission: 'feature_flags.view', icon: Flag, group: 'Platform' },
+  { id: 'permission-simulator', label: 'Permission Simulator', permission: 'settings.view', icon: KeyRound, group: 'Platform' },
+  { id: 'data-quality', label: 'Data Quality', permission: 'health.view', icon: DatabaseZap, group: 'Platform' },
+  { id: 'system-health', label: 'System Health', permission: 'health.view', icon: ServerCog, group: 'Platform' },
+  { id: 'settings', label: 'Internal Access', permission: 'settings.view', icon: Settings, group: 'Platform' },
 ]
 
-const groupOrder: NavItem['group'][] = ['Command', 'Clients', 'Operations', 'Company']
+type NavGroup = NavItem['group']
+
+const groupOrder: NavGroup[] = ['Today', 'Clients', 'Support', 'Revenue', 'Growth', 'Automation', 'Platform']
+const groupIcons: Record<NavGroup, typeof LayoutDashboard> = {
+  Today: LayoutDashboard,
+  Clients: Building2,
+  Support: LifeBuoy,
+  Revenue: CircleDollarSign,
+  Growth: Bot,
+  Automation: Workflow,
+  Platform: ServerCog,
+}
+
+const workspaceDetails: Record<NavGroup, { summary: string; focus: string }> = {
+  Today: {
+    summary: 'Daily priorities, risks, and owner decisions.',
+    focus: 'Start here when you need to know what needs attention first.',
+  },
+  Clients: {
+    summary: 'Organizations, properties, venues, adoption, and health.',
+    focus: 'Use this area to understand a client account and decide the next success move.',
+  },
+  Support: {
+    summary: 'Troubleshooting, incidents, coverage, and view-as support.',
+    focus: 'Use this area when a customer needs help or something in an instance looks unhealthy.',
+  },
+  Revenue: {
+    summary: 'Registrations, billing, MRR, reports, and exports.',
+    focus: 'Use this area to understand signup quality, revenue movement, billing risk, and reports.',
+  },
+  Growth: {
+    summary: 'Campaign intelligence, agent signals, and outreach opportunities.',
+    focus: 'Use this area to review growth signals and future marketing, website, SEO, SEM, SDR, and success agents.',
+  },
+  Automation: {
+    summary: 'Action requests, approvals, watch rules, and execution records.',
+    focus: 'Use this area to queue work safely, review proposed changes, and keep automated actions auditable.',
+  },
+  Platform: {
+    summary: 'Modules, flags, data quality, system health, audit, and access.',
+    focus: 'Use this area to manage the internal platform foundation and keep changes controlled.',
+  },
+}
 
 const ActionRequestLaunchpadPage = lazy(() => import('../../admin/action-requests/ActionRequestLaunchpadPage'))
 const ActionTimelinePage = lazy(() => import('../../admin/action-requests/ActionTimelinePage'))
@@ -301,6 +343,17 @@ export default function AppShell({ session, onLogout }: AppShellProps) {
   const setActivePage = (page: PageId) => {
     sessionStorage.setItem('hc_platform_active_page', page)
     setActivePageState(page)
+  }
+
+  const activeNavItem = visibleItems.find(item => item.id === activePage)
+  const activeGroup = activeNavItem?.group ?? firstItem?.group ?? 'Today'
+  const activeWorkspace = workspaceDetails[activeGroup]
+  const activePageLabel = activeNavItem?.label ?? 'Admin View'
+  const activeGroupItems = visibleItems.filter(item => item.group === activeGroup)
+  const visibleGroups = groupOrder.filter(group => visibleItems.some(item => item.group === group))
+  const openGroup = (group: NavGroup) => {
+    const firstGroupItem = visibleItems.find(item => item.group === group)
+    if (firstGroupItem) setActivePage(firstGroupItem.id)
   }
 
   const globalSearchResults = useMemo<GlobalSearchResult[]>(() => {
@@ -765,30 +818,47 @@ export default function AppShell({ session, onLogout }: AppShellProps) {
           </div>
         </div>
 
-        <nav className="sidebar-nav">
-          {groupOrder.map(group => {
-            const groupItems = visibleItems.filter(item => item.group === group)
-            if (!groupItems.length) return null
+        <div className="workspace-switcher" aria-label="Admin workspaces">
+          {visibleGroups.map(group => {
+            const Icon = groupIcons[group]
+            const isActive = group === activeGroup
             return (
-              <div key={group} className="nav-group">
-                <p>{group}</p>
-                {groupItems.map(item => {
-                  const Icon = item.icon
-                  const isActive = item.id === activePage
-                  return (
-                    <button
-                      key={item.id}
-                      className={`nav-item${isActive ? ' active' : ''}`}
-                      onClick={() => setActivePage(item.id)}
-                    >
-                      <Icon size={16} strokeWidth={1.8} />
-                      <span>{item.label}</span>
-                    </button>
-                  )
-                })}
-              </div>
+              <button
+                key={group}
+                className={`workspace-button${isActive ? ' active' : ''}`}
+                onClick={() => openGroup(group)}
+              >
+                <Icon size={15} strokeWidth={1.8} />
+                <span>{group}</span>
+              </button>
             )
           })}
+        </div>
+
+        <div className="sidebar-context">
+          <span>Workspace</span>
+          <strong>{activeGroup}</strong>
+          <small>{activeWorkspace.summary}</small>
+        </div>
+
+        <nav className="sidebar-nav" aria-label={`${activeGroup} pages`}>
+          <div className="nav-group">
+            <p>{activeGroup}</p>
+            {activeGroupItems.map(item => {
+              const Icon = item.icon
+              const isActive = item.id === activePage
+              return (
+                <button
+                  key={item.id}
+                  className={`nav-item${isActive ? ' active' : ''}`}
+                  onClick={() => setActivePage(item.id)}
+                >
+                  <Icon size={16} strokeWidth={1.8} />
+                  <span>{item.label}</span>
+                </button>
+              )
+            })}
+          </div>
         </nav>
 
         <div className="sidebar-footer">
@@ -857,6 +927,29 @@ export default function AppShell({ session, onLogout }: AppShellProps) {
             </div>
           </section>
         )}
+        <section className="workspace-bar" aria-label={`${activeGroup} workspace context`}>
+          <div>
+            <span>{activeGroup}</span>
+            <strong>{activePageLabel}</strong>
+            <p>{activeWorkspace.focus}</p>
+          </div>
+          <div className="workspace-jump-list" aria-label={`${activeGroup} workspace pages`}>
+            {activeGroupItems.map(item => {
+              const Icon = item.icon
+              const isActive = item.id === activePage
+              return (
+                <button
+                  key={item.id}
+                  className={`workspace-jump${isActive ? ' active' : ''}`}
+                  onClick={() => setActivePage(item.id)}
+                >
+                  <Icon size={14} strokeWidth={1.8} />
+                  <span>{item.label}</span>
+                </button>
+              )
+            })}
+          </div>
+        </section>
         <div className="main-content">
           <Suspense fallback={<PageLoadingFallback />}>
             {renderPage()}
