@@ -556,7 +556,15 @@ export default function AppShell({ session, onLogout }: AppShellProps) {
   const renderPage = () => {
     switch (activePage) {
       case 'dashboard':
-        return <ExecutiveDashboard />
+        return (
+          <ExecutiveDashboard
+            session={session}
+            canOpenPage={(page) => visibleItems.some(item => item.id === page)}
+            onOpenPage={(page) => {
+              if (visibleItems.some(item => item.id === page)) setActivePage(page as PageId)
+            }}
+          />
+        )
       case 'executive-morning-review':
         return (
           <ExecutiveMorningReviewPage

@@ -781,6 +781,138 @@ td .muted-copy {
   color: var(--danger);
 }
 
+.today-command-panel {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(360px, 0.9fr);
+  gap: 14px;
+  padding: 16px;
+  background: var(--s1);
+  border: 1px solid var(--b);
+  border-radius: 8px;
+}
+
+.today-command-copy {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.today-command-copy h2 {
+  max-width: 760px;
+  margin: 0;
+  font-size: 20px;
+  line-height: 1.25;
+}
+
+.today-command-copy span {
+  display: block;
+  max-width: 760px;
+  margin-top: 8px;
+  color: var(--t2);
+}
+
+.today-command-actions {
+  display: grid;
+  gap: 8px;
+}
+
+.today-command-link,
+.readiness-spine-item {
+  width: 100%;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 11px 12px;
+  border: 1px solid var(--b);
+  border-radius: 8px;
+  background: var(--s2);
+  color: var(--t1);
+  text-align: left;
+  transition: color 0.15s, border-color 0.15s, background 0.15s;
+}
+
+.today-command-link:hover,
+.readiness-spine-item:hover {
+  border-color: var(--b2);
+  color: var(--cyan);
+}
+
+.today-command-link span,
+.readiness-spine-item span {
+  min-width: 0;
+  display: grid;
+  gap: 3px;
+}
+
+.today-command-link strong,
+.readiness-spine-item strong {
+  font-size: 13px;
+}
+
+.today-command-link small,
+.readiness-spine-item small {
+  color: var(--t2);
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.today-signal-grid {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.today-signal-card {
+  min-height: 124px;
+  display: grid;
+  align-content: space-between;
+  gap: 10px;
+  padding: 14px;
+  background: var(--s1);
+  border: 1px solid var(--b);
+  border-radius: 8px;
+}
+
+.today-signal-card strong {
+  display: block;
+  font-size: 28px;
+  line-height: 1;
+}
+
+.today-signal-card span {
+  color: var(--t2);
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.readiness-spine-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.readiness-spine-item {
+  align-items: flex-start;
+}
+
+.readiness-spine-item.tone-ok svg {
+  color: var(--ok);
+}
+
+.readiness-spine-item.tone-warn svg {
+  color: var(--warn);
+}
+
+.readiness-spine-item.tone-danger svg {
+  color: var(--danger);
+}
+
+.readiness-spine-item.tone-info svg {
+  color: var(--info);
+}
+
 .insight-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -8084,6 +8216,8 @@ td code {
 
   .metrics-grid,
   .metrics-grid.compact,
+  .today-signal-grid,
+  .readiness-spine-grid,
   .insight-grid,
   .executive-morning-section-grid,
   .owner-decision-option-grid,
