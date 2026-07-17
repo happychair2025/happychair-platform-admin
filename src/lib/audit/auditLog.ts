@@ -1,4 +1,5 @@
 import { useSyncExternalStore } from 'react'
+import { createLedgerPersistencePlan } from '../platform-ledger/durableLedger'
 
 export type AuditSeverity = 'info' | 'notice' | 'warning' | 'critical'
 export type AuditOutcome = 'allowed' | 'blocked' | 'recorded'
@@ -19,6 +20,8 @@ export interface AuditEvent {
   metadata?: Record<string, unknown>
   persistenceStatus?: AuditPersistenceStatus
   persistenceTarget?: AuditPersistenceTarget
+  serverEndpointLabel?: string
+  serverSyncRequired?: boolean
   createdAt: string
 }
 
@@ -44,12 +47,22 @@ export function getLocalAuditEvents(): AuditEvent[] {
 }
 
 export function appendAuditEvent(event: Omit<AuditEvent, 'id' | 'createdAt'>) {
+  const persistence = event.persistenceStatus === 'server_recorded'
+    ? {
+      persistenceStatus: 'server_recorded' as const,
+      persistenceTarget: 'platform_admin.audit_logs' as const,
+      syncRequired: false,
+      endpointLabel: 'Read-only server record',
+    }
+    : createLedgerPersistencePlan('platform_admin.audit_logs')
   const nextEvent: AuditEvent = {
     ...event,
     id: crypto.randomUUID(),
     outcome: event.outcome ?? 'recorded',
-    persistenceStatus: event.persistenceStatus ?? 'local_durable',
-    persistenceTarget: event.persistenceTarget ?? 'local_storage',
+    persistenceStatus: event.persistenceStatus ?? persistence.persistenceStatus,
+    persistenceTarget: event.persistenceTarget ?? persistence.persistenceTarget,
+    serverEndpointLabel: event.serverEndpointLabel ?? persistence.endpointLabel,
+    serverSyncRequired: event.serverSyncRequired ?? persistence.syncRequired,
     createdAt: new Date().toISOString(),
   }
   const events = [nextEvent, ...getLocalAuditEvents()].slice(0, 40)

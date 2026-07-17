@@ -1,6 +1,7 @@
 import { useSyncExternalStore } from 'react'
 import type { AdminSession } from '../../App'
 import type { PermissionKey } from '../permissions/permissions'
+import { createLedgerPersistencePlan } from '../platform-ledger/durableLedger'
 
 export type AdminActionRequestType =
   | 'module_activation_change'
@@ -202,17 +203,21 @@ export function updateAdminActionRequestStatus(
   status: AdminActionRequestStatus,
   patch: AdminActionRequestStatusPatch = {},
 ) {
+  const persistence = getActionRequestPersistencePatch(request.persistenceStatus)
+
   return saveAdminActionRequest({
     ...request,
     status,
     statusReason: patch.statusReason ?? request.statusReason,
     transitionAuditEventId: patch.transitionAuditEventId ?? request.transitionAuditEventId,
+    persistenceStatus: persistence.persistenceStatus,
+    persistenceTarget: persistence.persistenceTarget,
     metadata: {
       ...request.metadata,
       ...patch.metadata,
+      ledgerEndpointLabel: persistence.endpointLabel,
+      ledgerSyncRequired: persistence.syncRequired,
     },
-    persistenceStatus: 'local_durable',
-    persistenceTarget: 'local_storage',
     updatedAt: new Date().toISOString(),
   })
 }
@@ -272,12 +277,31 @@ export function formatAdminActionType(actionType: AdminActionRequestType) {
 }
 
 function withLocalPersistence(request: AdminActionRequest): AdminActionRequest {
+  const persistence = getActionRequestPersistencePatch(request.persistenceStatus)
   return {
     ...request,
     updatedAt: new Date().toISOString(),
-    persistenceStatus: request.persistenceStatus ?? 'local_durable',
-    persistenceTarget: request.persistenceTarget ?? 'local_storage',
+    persistenceStatus: request.persistenceStatus ?? persistence.persistenceStatus,
+    persistenceTarget: request.persistenceTarget ?? persistence.persistenceTarget,
+    metadata: {
+      ...request.metadata,
+      ledgerEndpointLabel: request.metadata?.ledgerEndpointLabel ?? persistence.endpointLabel,
+      ledgerSyncRequired: request.metadata?.ledgerSyncRequired ?? persistence.syncRequired,
+    },
   }
+}
+
+function getActionRequestPersistencePatch(currentStatus?: AdminActionRequestPersistenceStatus) {
+  if (currentStatus === 'server_recorded') {
+    return {
+      persistenceStatus: 'server_recorded' as const,
+      persistenceTarget: 'platform_admin.admin_action_requests' as const,
+      syncRequired: false,
+      endpointLabel: 'Read-only server record',
+    }
+  }
+
+  return createLedgerPersistencePlan('platform_admin.admin_action_requests')
 }
 
 function emitAdminActionRequestChange() {

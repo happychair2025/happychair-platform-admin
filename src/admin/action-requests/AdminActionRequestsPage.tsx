@@ -1,4 +1,4 @@
-import { AlertTriangle, CheckCircle2, Clock3, Database, ListChecks, PlayCircle, ServerCog, ShieldCheck, XCircle } from 'lucide-react'
+import { AlertTriangle, CheckCircle2, Clock3, Database, HardDrive, ListChecks, PlayCircle, ServerCog, ShieldCheck, XCircle } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import type { AdminSession } from '../../App'
 import DataTable from '../../components/admin/DataTable'
@@ -41,6 +41,12 @@ import {
   type AdminActionRequestType,
 } from '../../lib/admin-actions/actionRequests'
 import { usePlatformData } from '../../lib/platform-data/PlatformDataContext'
+import {
+  durableLedgerBoundaryRule,
+  getDurableLedgerConfig,
+  getLedgerPersistenceLabel,
+  getLedgerPersistenceTone,
+} from '../../lib/platform-ledger/durableLedger'
 import { hasPermission } from '../../lib/permissions/permissions'
 
 interface AdminActionRequestsPageProps {
@@ -74,9 +80,11 @@ function formatDateTime(value: string) {
 }
 
 function persistenceLabel(request: AdminActionRequest) {
-  if (request.persistenceStatus === 'server_recorded') return 'Server Recorded'
-  if (request.persistenceStatus === 'server_pending') return 'Server Pending'
-  return 'Local Queue'
+  return getLedgerPersistenceLabel(request.persistenceStatus, request.persistenceTarget)
+}
+
+function ledgerSyncLabel(request: AdminActionRequest) {
+  return request.metadata?.ledgerSyncRequired ? 'Server sync required' : 'No server sync required'
 }
 
 function getAvailableTransitions(status: AdminActionRequestStatus): AdminActionRequestStatus[] {
@@ -104,6 +112,7 @@ export default function AdminActionRequestsPage({ session }: AdminActionRequests
   const governanceRecords = useMemo(() => buildActionRequestGovernance(rows, data), [data, rows])
   const governanceByRequestId = useMemo(() => new Map(governanceRecords.map(record => [record.requestId, record])), [governanceRecords])
   const executionConfig = getActionExecutionConfig(import.meta.env)
+  const durableLedgerConfig = getDurableLedgerConfig(import.meta.env)
   const executionPackets = useMemo(() => buildActionExecutionPackets(rows, governanceByRequestId, executionConfig), [executionConfig, governanceByRequestId, rows])
   const executionByRequestId = useMemo(() => new Map(executionPackets.map(packet => [packet.requestId, packet])), [executionPackets])
   const executionSummary = useMemo(() => summarizeActionExecution(executionPackets), [executionPackets])
@@ -120,6 +129,9 @@ export default function AdminActionRequestsPage({ session }: AdminActionRequests
   const needsApprovalCount = governanceRecords.filter(record => record.readiness === 'Needs Approval').length
   const governanceBlockedCount = governanceRecords.filter(record => record.readiness === 'Blocked').length
   const highRiskCount = governanceRecords.filter(record => record.riskLevel === 'Critical' || record.riskLevel === 'High').length
+  const serverPendingCount = rows.filter(row => row.persistenceStatus === 'server_pending').length
+  const serverRecordedCount = rows.filter(row => row.persistenceStatus === 'server_recorded').length
+  const localQueueCount = rows.filter(row => row.persistenceStatus === 'local_durable' || !row.persistenceStatus).length
   const handlerList = Object.values(serverActionHandlerPlaceholders)
 
   const transitionRequest = (request: AdminActionRequest, nextStatus: AdminActionRequestStatus) => {
@@ -247,6 +259,13 @@ export default function AdminActionRequestsPage({ session }: AdminActionRequests
       </div>
 
       <div className="metrics-grid compact">
+        <MetricCard label="Ledger Mode" value={durableLedgerConfig.mode === 'trusted_server_ready' ? 'Server Ready' : 'Local Review'} delta={durableLedgerConfig.endpointLabel} tone={durableLedgerConfig.endpointConfigured ? 'ok' : 'warn'} icon={<Database size={16} />} />
+        <MetricCard label="Server Pending" value={String(serverPendingCount)} delta="Ready to sync through trusted handler" tone={serverPendingCount ? 'warn' : 'neutral'} icon={<ServerCog size={16} />} />
+        <MetricCard label="Server Recorded" value={String(serverRecordedCount)} delta="Trusted audit/read-view records" tone="ok" icon={<ShieldCheck size={16} />} />
+        <MetricCard label="Local Queue" value={String(localQueueCount)} delta="Browser-held review records" tone={localQueueCount ? 'warn' : 'ok'} icon={<HardDrive size={16} />} />
+      </div>
+
+      <div className="metrics-grid compact">
         <MetricCard label="Mock Dry Runs" value={String(mockExecutionSummary.total)} delta="Local server simulations" tone="neutral" icon={<ServerCog size={16} />} />
         <MetricCard label="Dry Run Passed" value={String(mockExecutionSummary.passed)} delta="Handlers returned clean previews" tone={mockExecutionSummary.passed ? 'ok' : 'neutral'} icon={<CheckCircle2 size={16} />} />
         <MetricCard label="Needs Approval" value={String(mockExecutionSummary.needsApproval)} delta="Previewed before approval" tone={mockExecutionSummary.needsApproval ? 'warn' : 'ok'} icon={<Clock3 size={16} />} />
@@ -260,8 +279,9 @@ export default function AdminActionRequestsPage({ session }: AdminActionRequests
           <span>{adminActionRequestConnectionRule}</span>
           <span>{actionExecutionBoundaryRule}</span>
           <span>{mockServerExecutionBoundaryRule}</span>
+          <span>{durableLedgerBoundaryRule}</span>
         </div>
-        <StatusPill label={canManage ? 'Queue controls enabled' : 'Review only'} tone={canManage ? 'ok' : 'warn'} />
+        <StatusPill label={durableLedgerConfig.endpointLabel} tone={durableLedgerConfig.endpointConfigured ? 'ok' : 'warn'} />
       </section>
 
       <div className="action-requests-layout">
@@ -309,6 +329,13 @@ export default function AdminActionRequestsPage({ session }: AdminActionRequests
               sortable: true,
               searchValue: row => row.status,
               render: row => <StatusPill label={row.status} tone={statusTone(row.status)} />,
+            },
+            {
+              key: 'persistence',
+              header: 'Persistence',
+              sortable: true,
+              searchValue: row => `${row.persistenceStatus ?? ''} ${row.persistenceTarget ?? ''}`,
+              render: row => <StatusPill label={persistenceLabel(row)} tone={getLedgerPersistenceTone(row.persistenceStatus)} />,
             },
             {
               key: 'governance',
@@ -385,6 +412,8 @@ export default function AdminActionRequestsPage({ session }: AdminActionRequests
                 <div><span>Scope</span><strong>{selectedRequest.scope.label}</strong></div>
                 <div><span>Permission</span><strong>{selectedRequest.permissionRequired}</strong></div>
                 <div><span>Persistence</span><strong>{persistenceLabel(selectedRequest)}</strong></div>
+                <div><span>Ledger Target</span><strong>{selectedRequest.persistenceTarget ?? 'local_storage'}</strong></div>
+                <div><span>Ledger Sync</span><strong>{ledgerSyncLabel(selectedRequest)}</strong></div>
               </div>
 
               {selectedGovernance && (

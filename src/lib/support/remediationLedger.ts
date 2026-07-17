@@ -1,4 +1,5 @@
 import { useSyncExternalStore } from 'react'
+import { createLedgerPersistencePlan } from '../platform-ledger/durableLedger'
 import type { RunbookActionOutcome, RunbookOutcomeStatus } from './runbooks'
 
 const storageKey = 'hc_platform_admin_remediation_packets'
@@ -61,11 +62,19 @@ export function useRemediationPackets() {
 }
 
 function withLocalPersistence(packet: RunbookActionOutcome): RunbookActionOutcome {
+  const persistence = packet.persistenceStatus === 'server_recorded'
+    ? {
+      persistenceStatus: 'server_recorded' as const,
+      persistenceTarget: 'platform_admin.remediation_packets' as const,
+      syncRequired: false,
+      endpointLabel: 'Read-only server record',
+    }
+    : createLedgerPersistencePlan('platform_admin.remediation_packets')
   return {
     ...packet,
     updatedAt: new Date().toISOString(),
-    persistenceStatus: packet.persistenceStatus ?? 'local_durable',
-    persistenceTarget: packet.persistenceTarget ?? 'local_storage',
+    persistenceStatus: packet.persistenceStatus ?? persistence.persistenceStatus,
+    persistenceTarget: packet.persistenceTarget ?? persistence.persistenceTarget,
   }
 }
 
