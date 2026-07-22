@@ -6,6 +6,7 @@ import {
   type AdminActionRequestType,
 } from './actionRequests'
 import { mockServerHandlerRegistry, type MockServerHandlerDefinition } from './mockServerExecutor'
+import { buildTrustedServerAdapterSpec, type TrustedServerAdapterSpec } from './trustedServerAdapter'
 
 export type ServerAdapterReadinessStatus = 'Ready For Wiring' | 'Review Only' | 'Blocked'
 export type ServerAdapterCheckStatus = 'pass' | 'warn' | 'fail'
@@ -29,6 +30,7 @@ export interface ServerAdapterContract {
   requestSchema: string[]
   responseSchema: string[]
   requiredServerControls: string[]
+  trustedAdapterSpec: TrustedServerAdapterSpec
   auditEvents: string[]
   rollbackStrategy: string
   dryRunRegistered: boolean
@@ -137,6 +139,21 @@ function buildServerAdapterContract(
   const route = endpointConfigured
     ? config.endpoint
     : `/platform-admin/actions/${handlerKey}`
+  const requestSchema = [
+    ...baseRequestSchema,
+    ...getDomainRequestFields(actionType),
+  ]
+  const responseSchema = mockHandler?.responseShape ?? ['status', 'audit_event_id', 'error']
+  const auditEvents = getAuditEvents(actionType)
+  const trustedAdapterSpec = buildTrustedServerAdapterSpec({
+    actionType,
+    handlerKey,
+    requiredPermission: permissionByActionType[actionType],
+    writeTarget: mockHandler?.simulatedWriteTarget ?? 'unregistered_handler',
+    requestFields: requestSchema,
+    responseFields: responseSchema,
+    auditEvents,
+  })
   const checks = buildAdapterChecks(handlerKey, actionType, config, mockHandler)
   const blockers = checks.filter(check => check.status === 'fail').map(check => check.detail)
   const warnings = checks.filter(check => check.status === 'warn').map(check => check.detail)
@@ -155,13 +172,11 @@ function buildServerAdapterContract(
     route,
     method: 'POST',
     simulatedWriteTarget: mockHandler?.simulatedWriteTarget ?? 'unregistered_handler',
-    requestSchema: [
-      ...baseRequestSchema,
-      ...getDomainRequestFields(actionType),
-    ],
-    responseSchema: mockHandler?.responseShape ?? ['status', 'audit_event_id', 'error'],
+    requestSchema,
+    responseSchema,
     requiredServerControls: baseServerControls,
-    auditEvents: getAuditEvents(actionType),
+    trustedAdapterSpec,
+    auditEvents,
     rollbackStrategy: rollbackStrategyByActionType[actionType],
     dryRunRegistered: Boolean(mockHandler),
     endpointConfigured,
@@ -194,6 +209,14 @@ function buildAdapterChecks(
       detail: mockHandler
         ? `${handlerKey} has a dry-run registry entry and response preview shape.`
         : `${handlerKey} has no dry-run registry entry.`,
+    },
+    {
+      id: 'trusted_adapter_contract',
+      label: 'Trusted Adapter Contract',
+      status: permissionByActionType[actionType] && mockHandler ? 'pass' : 'fail',
+      detail: permissionByActionType[actionType] && mockHandler
+        ? `${handlerKey} has a typed request envelope, response states, preflight gates, and allowlisted write target.`
+        : `${handlerKey} needs a permission mapping and write target before trusted server wiring.`,
     },
     {
       id: 'endpoint',

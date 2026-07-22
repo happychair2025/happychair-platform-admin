@@ -23,6 +23,7 @@ import {
   summarizeServerAdapterReadiness,
   type ServerAdapterContract,
 } from '../../lib/admin-actions/serverAdapterReadiness'
+import { trustedServerAdapterBoundaryRule } from '../../lib/admin-actions/trustedServerAdapter'
 import { useLocalAuditEvents } from '../../lib/audit/auditLog'
 import { hasPermission } from '../../lib/permissions/permissions'
 import { usePlatformData } from '../../lib/platform-data/PlatformDataContext'
@@ -130,6 +131,7 @@ export default function ServerAdapterReadinessPage({ session }: ServerAdapterRea
           <span>{serverAdapterBoundaryRule}</span>
           <span>{serverAdapterCoverageBoundaryRule}</span>
           <span>{actionExecutionBoundaryRule}</span>
+          <span>{trustedServerAdapterBoundaryRule}</span>
         </div>
         <StatusPill label={summary.endpointConfigured ? 'Endpoint configured' : 'Review only'} tone={summary.endpointConfigured ? 'ok' : 'warn'} />
       </section>
@@ -227,6 +229,8 @@ export default function ServerAdapterReadinessPage({ session }: ServerAdapterRea
                 <div><span>Method</span><strong>{selectedContract.method}</strong></div>
                 <div><span>Route</span><strong>{selectedContract.route}</strong></div>
                 <div><span>Target</span><strong>{selectedContract.simulatedWriteTarget}</strong></div>
+                <div><span>Modes</span><strong>{selectedContract.trustedAdapterSpec.supportedModes.join(', ')}</strong></div>
+                <div><span>Browser Mutation</span><strong>Blocked</strong></div>
               </div>
 
               <section className={`panel server-adapter-status-panel tone-${selectedContract.blockers.length ? 'danger' : selectedContract.warnings.length ? 'warn' : 'ok'}`}>
@@ -326,9 +330,73 @@ export default function ServerAdapterReadinessPage({ session }: ServerAdapterRea
               </div>
 
               <div className="detail-section">
+                <h3>Trusted Request Headers</h3>
+                <div className="settings-rule-list">
+                  {selectedContract.trustedAdapterSpec.requiredHeaders.map(header => (
+                    <div key={header.key}>
+                      <KeyRound size={16} strokeWidth={1.8} />
+                      <strong>{header.key}: {header.purpose}</strong>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="detail-section">
+                <h3>Trusted Request Envelope</h3>
+                <div className="governance-check-list">
+                  {selectedContract.trustedAdapterSpec.requestEnvelope.map(section => (
+                    <article key={section.key} className="governance-check-item tone-pass">
+                      <div>
+                        <strong>{section.label}</strong>
+                        <StatusPill label={`${section.requiredFields.length} fields`} tone="ok" />
+                      </div>
+                      <p>{section.requiredFields.join(', ')}</p>
+                    </article>
+                  ))}
+                </div>
+              </div>
+
+              <div className="detail-section">
+                <h3>Server Preflight Gates</h3>
+                <div className="governance-check-list">
+                  {selectedContract.trustedAdapterSpec.preflightGates.map(gate => (
+                    <article key={gate.id} className="governance-check-item tone-warn">
+                      <div>
+                        <strong>{gate.label}</strong>
+                        <StatusPill label={gate.severity === 'critical' ? 'Critical gate' : 'Required gate'} tone="warn" />
+                      </div>
+                      <p>{gate.passCondition} Rejection: {gate.rejectionCode}.</p>
+                    </article>
+                  ))}
+                </div>
+              </div>
+
+              <div className="detail-section">
+                <h3>Trusted Response States</h3>
+                <div className="governance-check-list">
+                  {selectedContract.trustedAdapterSpec.responseStates.map(state => (
+                    <article key={state.status} className={`governance-check-item tone-${state.mutationApplied ? 'warn' : 'pass'}`}>
+                      <div>
+                        <strong>{state.label}</strong>
+                        <StatusPill label={state.mutationApplied ? 'Mutation applied' : 'No mutation'} tone={state.mutationApplied ? 'warn' : 'ok'} />
+                      </div>
+                      <p>{state.meaning}</p>
+                    </article>
+                  ))}
+                </div>
+              </div>
+
+              <div className="detail-section">
                 <h3>Audit Events</h3>
                 <div className="adapter-chip-grid">
                   {selectedContract.auditEvents.map(event => <span key={event}>{event}</span>)}
+                </div>
+              </div>
+
+              <div className="detail-section">
+                <h3>Server Rejection Codes</h3>
+                <div className="adapter-chip-grid">
+                  {selectedContract.trustedAdapterSpec.rejectionCodes.map(code => <span key={code}>{code}</span>)}
                 </div>
               </div>
 

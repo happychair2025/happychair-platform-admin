@@ -19,6 +19,7 @@ VITE_PLATFORM_DATA_SOURCE=supabase
 VITE_PLATFORM_AUTH_SOURCE=preview
 VITE_PLATFORM_AUTH_SERVER_ENDPOINT=
 VITE_PLATFORM_ACTIONS_SERVER_ENDPOINT=
+VITE_PLATFORM_LEDGER_SERVER_ENDPOINT=
 VITE_SUPABASE_URL=https://your-project.supabase.co
 VITE_SUPABASE_ANON_KEY=your-legacy-anon-key
 ```
@@ -28,6 +29,8 @@ With `VITE_PLATFORM_DATA_SOURCE=mock`, the app uses local mock data.
 `VITE_PLATFORM_AUTH_SOURCE=preview` keeps the managed internal access preview active. `VITE_PLATFORM_AUTH_SOURCE=supabase` prepares the app to verify internal sessions against Supabase Auth, but admin-user creation, invitation, suspension, role changes, and provider mutations must still route through a trusted server endpoint. Do not expose a Supabase secret/service-role key in browser config.
 
 `VITE_PLATFORM_ACTIONS_SERVER_ENDPOINT` is reserved for the future trusted Admin Action Request executor. When unset, the UI still builds execution packets, idempotency keys, preflight checks, and payload previews, but requests remain review-only browser contracts and cannot run production mutations from the client.
+
+`VITE_PLATFORM_LEDGER_SERVER_ENDPOINT` is reserved for future trusted persistence of browser-created action, audit, remediation, and agent ledgers. When unset, those ledgers remain local review records. See [Trusted Server Action Adapter](TRUSTED_SERVER_ACTION_ADAPTER.md) before wiring either endpoint.
 
 ## Required Views
 
